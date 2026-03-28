@@ -1,0 +1,9 @@
+services:
+  bot:
+    build: .
+    image: openrouter-chat-bot:phase0
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
