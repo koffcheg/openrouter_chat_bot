@@ -7,11 +7,15 @@ from aiogram import Dispatcher
 from bot.clients.openrouter import OpenRouterClient
 from bot.config.settings import Settings
 from bot.db.sqlite import connect, initialize_database
+from bot.handlers.admin.control import router as admin_control_router
+from bot.handlers.admin.status import router as admin_status_router
 from bot.handlers.public.ask import router as ask_router
 from bot.handlers.public.help import router as help_router
 from bot.middleware.permissions import PermissionMiddleware
 from bot.middleware.throttling import ThrottlingMiddleware
 from bot.repositories.chat_settings import ChatSettingsRepository
+from bot.repositories.quota_state import CooldownStateRepository
+from bot.repositories.request_state import RequestStateRepository
 from bot.services.ai.orchestrator import AIOrchestrator
 
 
@@ -27,6 +31,8 @@ async def build_application(settings: Settings) -> AppContainer:
     await initialize_database(db)
 
     chat_settings_repository = ChatSettingsRepository(db)
+    cooldown_repository = CooldownStateRepository(db)
+    request_state_repository = RequestStateRepository(db)
     openrouter_client = OpenRouterClient(
         api_key=settings.openrouter_api_key,
         base_url=settings.openrouter_base_url,
@@ -46,6 +52,12 @@ async def build_application(settings: Settings) -> AppContainer:
     dispatcher.update.middleware(ThrottlingMiddleware())
     dispatcher.include_router(help_router)
     dispatcher.include_router(ask_router)
+    dispatcher.include_router(admin_control_router)
+    dispatcher.include_router(admin_status_router)
+    dispatcher["settings"] = settings
     dispatcher["ai_orchestrator"] = ai_orchestrator
+    dispatcher["chat_settings_repository"] = chat_settings_repository
+    dispatcher["cooldown_repository"] = cooldown_repository
+    dispatcher["request_state_repository"] = request_state_repository
 
     return AppContainer(dispatcher=dispatcher, ai_orchestrator=ai_orchestrator, db=db)

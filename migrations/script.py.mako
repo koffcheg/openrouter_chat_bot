@@ -1,1 +1,1 @@
-## Alembic migration template placeholder for Phase 1.
+## Alembic migration template placeholder.

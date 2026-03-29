@@ -24,12 +24,7 @@ class DummyOpenRouterClient:
 @pytest.mark.asyncio
 async def test_orchestrator_ask_happy_path() -> None:
     client = DummyOpenRouterClient()
-    orchestrator = AIOrchestrator(
-        openrouter_client=client,
-        chat_settings_repository=DummyChatSettingsRepository(),
-        max_input_chars=100,
-    )
-
+    orchestrator = AIOrchestrator(openrouter_client=client, chat_settings_repository=DummyChatSettingsRepository(), max_input_chars=100)
     result = await orchestrator.ask(chat_id=123, text="Hello")
     assert result == "answer"
     assert client.calls == [("Hello", "System", "nvidia/nemotron-3-super-120b-a12b:free")]
@@ -37,11 +32,6 @@ async def test_orchestrator_ask_happy_path() -> None:
 
 @pytest.mark.asyncio
 async def test_orchestrator_ask_rejects_empty_input() -> None:
-    orchestrator = AIOrchestrator(
-        openrouter_client=DummyOpenRouterClient(),
-        chat_settings_repository=DummyChatSettingsRepository(),
-        max_input_chars=100,
-    )
-
+    orchestrator = AIOrchestrator(openrouter_client=DummyOpenRouterClient(), chat_settings_repository=DummyChatSettingsRepository(), max_input_chars=100)
     with pytest.raises(UserInputError):
         await orchestrator.ask(chat_id=123, text="   ")

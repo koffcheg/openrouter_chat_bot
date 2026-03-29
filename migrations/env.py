@@ -1,1 +1,1 @@
-"""Alembic environment placeholder for Phase 1."""
+"""Alembic environment placeholder."""

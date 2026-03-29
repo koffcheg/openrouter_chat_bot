@@ -1,7 +1,7 @@
 services:
   bot:
     build: .
-    image: openrouter-chat-bot:phase1
+    image: openrouter-chat-bot:phase2
     env_file:
       - .env
     volumes:

@@ -1,1 +1,1 @@
-"""Phase 1 DB initialization helper."""
+"""Phase 2 DB initialization helper."""

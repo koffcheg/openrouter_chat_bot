@@ -3,12 +3,28 @@ class BotError(Exception):
 
 
 class ConfigurationError(BotError):
-    """Raised when required configuration is missing or invalid."""
+    pass
 
 
 class ProviderError(BotError):
-    """Raised when the upstream AI provider fails."""
+    pass
+
+
+class ProviderTimeoutError(ProviderError):
+    pass
+
+
+class ProviderRateLimitError(ProviderError):
+    pass
+
+
+class ProviderUnavailableError(ProviderError):
+    pass
 
 
 class UserInputError(BotError):
-    """Raised when user input is invalid."""
+    pass
+
+
+class PermissionDeniedError(BotError):
+    pass

@@ -7,10 +7,27 @@ SCHEMA_STATEMENTS = [
     CREATE TABLE IF NOT EXISTS chat_settings (
         chat_id INTEGER PRIMARY KEY,
         is_paused INTEGER NOT NULL DEFAULT 0,
-        system_prompt TEXT NULL,
+        system_prompt TEXT NOT NULL,
         current_model_slug TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS cooldown_state (
+        chat_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        last_request_at REAL NOT NULL,
+        PRIMARY KEY (chat_id, user_id)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS active_requests (
+        chat_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        started_at REAL NOT NULL,
+        request_key TEXT NOT NULL,
+        PRIMARY KEY (chat_id, user_id)
     )
     """,
     """

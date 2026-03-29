@@ -1,1 +1,1 @@
-"""Phase 0 test configuration placeholder."""
+"""Test configuration."""

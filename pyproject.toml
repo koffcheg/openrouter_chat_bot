@@ -4,11 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openrouter-chat-bot"
-version = "0.1.0"
+version = "0.2.0"
 description = "Telegram AI bot using aiogram 3 and OpenRouter"
 readme = "README.md"
 requires-python = ">=3.12"
-authors = [{name = "OpenAI"}]
 dependencies = [
   "aiogram>=3.13,<4",
   "aiosqlite>=0.20,<1",
