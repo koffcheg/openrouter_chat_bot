@@ -1,1 +1,1 @@
-"""Telegram services placeholder package."""
+"""Telegram services package."""

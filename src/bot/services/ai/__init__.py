@@ -1,1 +1,1 @@
-"""AI services placeholder package."""
+"""AI services package."""

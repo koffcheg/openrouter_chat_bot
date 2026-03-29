@@ -1,1 +1,1 @@
-"""Admin handlers placeholder package."""
+"""Admin handlers package."""

@@ -1,1 +1,1 @@
-"""Services package placeholder."""
+"""Services package."""

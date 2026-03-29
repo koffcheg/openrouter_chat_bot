@@ -15,4 +15,3 @@ htmlcov/
 venv/
 .idea/
 .vscode/
-data/*.db

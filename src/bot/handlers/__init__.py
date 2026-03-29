@@ -1,1 +1,1 @@
-"""Handlers package placeholder."""
+"""Handlers package."""

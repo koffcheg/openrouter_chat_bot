@@ -1,1 +1,1 @@
-"""Telegram admin checks placeholder for Phase 0."""
+"""Phase 1 placeholder."""

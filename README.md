@@ -1,5 +1,32 @@
 # openrouter_chat_bot
 
-Phase 0 scaffold for a Telegram AI bot built with Python and aiogram 3.
+Telegram AI bot for group chats using aiogram 3 and OpenRouter.
 
-This commit intentionally contains only architecture scaffolding, configuration placeholders, Docker files, package/module placeholders, and smoke tests. No Phase 1 business logic is implemented yet.
+## Phase 1
+
+This phase delivers a runnable MVP with:
+- environment-based configuration
+- structured logging
+- `/help`
+- `/ask <text>`
+- OpenRouter client wired to the default Nemotron free model
+- SQLite-backed chat settings repository bootstrap
+- middleware scaffolds for permissions and throttling
+- Docker and docker-compose for local/container runs
+
+## Local run
+
+```bash
+cp .env.example .env
+# fill BOT_TOKEN and OPENROUTER_API_KEY
+python -m venv .venv
+. .venv/bin/activate
+pip install -e .[dev]
+python -m bot.main
+```
+
+## Run tests
+
+```bash
+pytest -q
+```

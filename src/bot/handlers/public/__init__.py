@@ -1,1 +1,1 @@
-"""Public handlers placeholder package."""
+"""Public handlers package."""
