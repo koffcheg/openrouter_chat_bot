@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import pytest
 
+from bot.core.constants import DEFAULT_SYSTEM_PROMPT
 from bot.services.ai.model_registry import ModelRegistry
 from bot.services.ai.orchestrator import AIOrchestrator
 from bot.services.ai.router import ModelRouter
@@ -10,7 +11,7 @@ from bot.services.health.status_service import StatusService
 
 @dataclass
 class SettingsRecord:
-    system_prompt: str = 'base system'
+    system_prompt: str = DEFAULT_SYSTEM_PROMPT
     current_model_slug: str = 'nvidia/nemotron-3-super-120b-a12b:free'
 
 
@@ -45,9 +46,14 @@ async def test_truth_includes_claim_and_context():
     result = await orchestrator.truth(chat_id=1, claim_text='claim body', context='ctx')
     assert result == 'ok'
     prompt, system_prompt, model = client.calls[0]
+    assert 'Analyze the following claim using internal knowledge only.' in prompt
+    assert 'What would need live verification.' in prompt
     assert 'Claim:\nclaim body' in prompt
     assert 'Conversation context:\nctx' in prompt
     assert 'Current UTC date:' in system_prompt
+    assert 'Never present yourself as the backend model vendor' in system_prompt
+    assert 'If the language is mixed or unclear, prefer Russian.' in system_prompt
+    assert 'Do not use Markdown syntax' in system_prompt
     assert model == 'nvidia/nemotron-3-super-120b-a12b:free'
 
 

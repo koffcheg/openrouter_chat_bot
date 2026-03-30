@@ -73,8 +73,9 @@ class AIOrchestrator:
 
     async def truth(self, *, chat_id: int, claim_text: str, context: str = '') -> str:
         prompt = (
-            'Analyze the following claim. Distinguish facts, assumptions, and uncertainty. '
-            'Do not pretend to verify live information.\n\n'
+            'Analyze the following claim using internal knowledge only. '
+            'Do not present the answer as live verification. '
+            'Structure the answer with four sections: Assessment, Known facts, Uncertainty, What would need live verification.\n\n'
             f'Claim:\n{claim_text.strip()}'
         )
         if context.strip():
