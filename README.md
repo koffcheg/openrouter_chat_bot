@@ -9,7 +9,7 @@ cp .env.example .env
 # fill BOT_TOKEN and OPENROUTER_API_KEY
 python -m venv .venv
 . .venv/bin/activate
-pip install -e .[dev]
+pip install .[dev]
 python -m bot.main
 ```
 
@@ -18,3 +18,9 @@ python -m bot.main
 ```bash
 pytest -q
 ```
+
+## Backup the SQLite database
+
+The runtime database path is taken from `SQLITE_PATH`.
+A simple host-side backup helper is available at `scripts/backup_db.sh`.
+Run it from the repository root while the bot is stopped if you want the safest copy.

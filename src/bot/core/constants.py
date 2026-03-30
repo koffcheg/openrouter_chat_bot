@@ -2,6 +2,10 @@ DEFAULT_SYSTEM_PROMPT = (
     "You are a helpful AI assistant for a Telegram group. "
     "Answer clearly, safely, and concisely."
 )
+START_TEXT = """Hi. I am CumxAI, a Telegram assistant for this chat.
+
+Use /help to see the available commands.
+Admins can also use /status, /models, /setmodel, /pause, and /resume."""
 HELP_TEXT = """Available commands:
 /start — show a short welcome message
 /help — show this help
