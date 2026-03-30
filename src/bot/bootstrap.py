@@ -10,13 +10,17 @@ from bot.db.sqlite import connect, initialize_database
 from bot.handlers.admin.control import router as admin_control_router
 from bot.handlers.admin.status import router as admin_status_router
 from bot.handlers.public.ask import router as ask_router
+from bot.handlers.public.fun import router as fun_router
 from bot.handlers.public.help import router as help_router
+from bot.handlers.public.summary import router as summary_router
+from bot.handlers.public.truth import router as truth_router
 from bot.middleware.permissions import PermissionMiddleware
 from bot.middleware.throttling import ThrottlingMiddleware
 from bot.repositories.chat_settings import ChatSettingsRepository
 from bot.repositories.quota_state import CooldownStateRepository
 from bot.repositories.request_state import RequestStateRepository
 from bot.services.ai.orchestrator import AIOrchestrator
+from bot.services.telegram.context_builder import ReplyContextBuilder
 
 
 @dataclass(slots=True)
@@ -46,12 +50,19 @@ async def build_application(settings: Settings) -> AppContainer:
         chat_settings_repository=chat_settings_repository,
         max_input_chars=settings.max_input_chars,
     )
+    reply_context_builder = ReplyContextBuilder(
+        max_messages=settings.max_context_messages,
+        max_chars=settings.max_context_chars,
+    )
 
     dispatcher = Dispatcher()
     dispatcher.update.middleware(PermissionMiddleware())
     dispatcher.update.middleware(ThrottlingMiddleware())
     dispatcher.include_router(help_router)
     dispatcher.include_router(ask_router)
+    dispatcher.include_router(truth_router)
+    dispatcher.include_router(summary_router)
+    dispatcher.include_router(fun_router)
     dispatcher.include_router(admin_control_router)
     dispatcher.include_router(admin_status_router)
     dispatcher["settings"] = settings
@@ -59,5 +70,6 @@ async def build_application(settings: Settings) -> AppContainer:
     dispatcher["chat_settings_repository"] = chat_settings_repository
     dispatcher["cooldown_repository"] = cooldown_repository
     dispatcher["request_state_repository"] = request_state_repository
+    dispatcher["reply_context_builder"] = reply_context_builder
 
     return AppContainer(dispatcher=dispatcher, ai_orchestrator=ai_orchestrator, db=db)

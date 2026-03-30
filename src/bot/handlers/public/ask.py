@@ -10,6 +10,7 @@ from bot.repositories.chat_settings import ChatSettingsRepository
 from bot.repositories.quota_state import CooldownStateRepository
 from bot.repositories.request_state import RequestStateRepository
 from bot.services.ai.orchestrator import AIOrchestrator
+from bot.utils.telegram_split import split_telegram_text
 
 router = Router(name="public_ask")
 
@@ -64,4 +65,5 @@ async def ask_command(
     finally:
         await request_state_repository.release(chat_id=message.chat.id, user_id=user_id, request_key=request_key)
 
-    await message.answer(answer)
+    for chunk in split_telegram_text(answer, settings.telegram_message_max_len):
+        await message.answer(chunk)
