@@ -1,3 +1,5 @@
+from html import escape
+
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
@@ -23,5 +25,5 @@ async def summary_command(message: Message, ai_orchestrator: AIOrchestrator, rep
         await message.answer("Reply to a message or provide text after /sum.")
         return
     result = await ai_orchestrator.summarize(chat_id=message.chat.id, target_text=target_text, context=context)
-    for chunk in split_telegram_text(result, settings.telegram_message_max_len):
+    for chunk in split_telegram_text(escape(result), settings.telegram_message_max_len):
         await message.answer(chunk)

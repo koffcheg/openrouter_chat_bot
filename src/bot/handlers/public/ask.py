@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from html import escape
+
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
@@ -65,5 +67,5 @@ async def ask_command(
     finally:
         await request_state_repository.release(chat_id=message.chat.id, user_id=user_id, request_key=request_key)
 
-    for chunk in split_telegram_text(answer, settings.telegram_message_max_len):
+    for chunk in split_telegram_text(escape(answer), settings.telegram_message_max_len):
         await message.answer(chunk)

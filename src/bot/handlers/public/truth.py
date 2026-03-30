@@ -1,3 +1,5 @@
+from html import escape
+
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
@@ -21,5 +23,5 @@ async def truth_command(message: Message, ai_orchestrator: AIOrchestrator, reply
         return
     context = reply_context_builder.build_ancestor_context(replied)
     result = await ai_orchestrator.truth(chat_id=message.chat.id, claim_text=claim_text, context=context)
-    for chunk in split_telegram_text(result, settings.telegram_message_max_len):
+    for chunk in split_telegram_text(escape(result), settings.telegram_message_max_len):
         await message.answer(chunk)

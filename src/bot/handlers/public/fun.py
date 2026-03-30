@@ -1,3 +1,5 @@
+from html import escape
+
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
@@ -22,5 +24,5 @@ async def fun_command(message: Message, ai_orchestrator: AIOrchestrator, reply_c
         await message.answer("Provide text after /fun or reply to a message.")
         return
     result = await ai_orchestrator.fun(chat_id=message.chat.id, text=text, context=context)
-    for chunk in split_telegram_text(result, settings.telegram_message_max_len):
+    for chunk in split_telegram_text(escape(result), settings.telegram_message_max_len):
         await message.answer(chunk)

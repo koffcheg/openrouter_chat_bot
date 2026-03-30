@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import aiosqlite
 
 SCHEMA_STATEMENTS = [
@@ -45,9 +47,12 @@ SCHEMA_STATEMENTS = [
 
 
 async def connect(sqlite_path: str, busy_timeout_ms: int) -> aiosqlite.Connection:
-    db = await aiosqlite.connect(sqlite_path)
+    path = Path(sqlite_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    db = await aiosqlite.connect(str(path))
     db.row_factory = aiosqlite.Row
     await db.execute(f"PRAGMA busy_timeout = {int(busy_timeout_ms)}")
+    await db.execute("PRAGMA journal_mode = WAL")
     return db
 
 

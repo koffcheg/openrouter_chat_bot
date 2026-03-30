@@ -15,14 +15,17 @@ from bot.handlers.public.fun import router as fun_router
 from bot.handlers.public.help import router as help_router
 from bot.handlers.public.summary import router as summary_router
 from bot.handlers.public.truth import router as truth_router
+from bot.middleware.errors import ErrorMiddleware
 from bot.middleware.permissions import PermissionMiddleware
 from bot.middleware.throttling import ThrottlingMiddleware
+from bot.repositories.audit_log import AuditLogRepository
 from bot.repositories.chat_settings import ChatSettingsRepository
 from bot.repositories.quota_state import CooldownStateRepository
 from bot.repositories.request_state import RequestStateRepository
 from bot.services.ai.model_registry import ModelRegistry
 from bot.services.ai.orchestrator import AIOrchestrator
 from bot.services.ai.router import ModelRouter
+from bot.services.health.status_service import StatusService
 from bot.services.telegram.context_builder import ReplyContextBuilder
 
 
@@ -40,8 +43,10 @@ async def build_application(settings: Settings) -> AppContainer:
     chat_settings_repository = ChatSettingsRepository(db)
     cooldown_repository = CooldownStateRepository(db)
     request_state_repository = RequestStateRepository(db)
+    audit_log_repository = AuditLogRepository(db)
     model_registry = ModelRegistry.default()
     model_router = ModelRouter(model_registry)
+    status_service = StatusService()
     openrouter_client = OpenRouterClient(
         api_key=settings.openrouter_api_key,
         base_url=settings.openrouter_base_url,
@@ -54,6 +59,7 @@ async def build_application(settings: Settings) -> AppContainer:
         openrouter_client=openrouter_client,
         chat_settings_repository=chat_settings_repository,
         model_router=model_router,
+        status_service=status_service,
         max_input_chars=settings.max_input_chars,
     )
     reply_context_builder = ReplyContextBuilder(
@@ -62,6 +68,7 @@ async def build_application(settings: Settings) -> AppContainer:
     )
 
     dispatcher = Dispatcher()
+    dispatcher.update.middleware(ErrorMiddleware())
     dispatcher.update.middleware(PermissionMiddleware())
     dispatcher.update.middleware(ThrottlingMiddleware())
     dispatcher.include_router(help_router)
@@ -79,5 +86,7 @@ async def build_application(settings: Settings) -> AppContainer:
     dispatcher['request_state_repository'] = request_state_repository
     dispatcher['reply_context_builder'] = reply_context_builder
     dispatcher['model_registry'] = model_registry
+    dispatcher['status_service'] = status_service
+    dispatcher['audit_log_repository'] = audit_log_repository
 
     return AppContainer(dispatcher=dispatcher, ai_orchestrator=ai_orchestrator, db=db)
