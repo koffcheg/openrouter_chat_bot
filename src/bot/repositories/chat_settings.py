@@ -25,10 +25,10 @@ class ChatSettingsRepository(BaseRepository):
         await cursor.close()
         if row:
             return ChatSettingsRecord(
-                chat_id=row["chat_id"],
-                is_paused=bool(row["is_paused"]),
-                system_prompt=row["system_prompt"] or DEFAULT_SYSTEM_PROMPT,
-                current_model_slug=row["current_model_slug"],
+                chat_id=row['chat_id'],
+                is_paused=bool(row['is_paused']),
+                system_prompt=row['system_prompt'] or DEFAULT_SYSTEM_PROMPT,
+                current_model_slug=row['current_model_slug'],
             )
 
         now = datetime.now(timezone.utc).isoformat()
@@ -48,3 +48,13 @@ class ChatSettingsRepository(BaseRepository):
         )
         await self.db.commit()
         return ChatSettingsRecord(chat_id=record.chat_id, is_paused=paused, system_prompt=record.system_prompt, current_model_slug=record.current_model_slug)
+
+    async def set_model(self, chat_id: int, model_slug: str) -> ChatSettingsRecord:
+        record = await self.get_or_create(chat_id)
+        now = datetime.now(timezone.utc).isoformat()
+        await self.db.execute(
+            "UPDATE chat_settings SET current_model_slug = ?, updated_at = ? WHERE chat_id = ?",
+            (model_slug, now, chat_id),
+        )
+        await self.db.commit()
+        return ChatSettingsRecord(chat_id=record.chat_id, is_paused=record.is_paused, system_prompt=record.system_prompt, current_model_slug=model_slug)

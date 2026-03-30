@@ -8,6 +8,7 @@ from bot.clients.openrouter import OpenRouterClient
 from bot.config.settings import Settings
 from bot.db.sqlite import connect, initialize_database
 from bot.handlers.admin.control import router as admin_control_router
+from bot.handlers.admin.models import router as admin_models_router
 from bot.handlers.admin.status import router as admin_status_router
 from bot.handlers.public.ask import router as ask_router
 from bot.handlers.public.fun import router as fun_router
@@ -19,7 +20,9 @@ from bot.middleware.throttling import ThrottlingMiddleware
 from bot.repositories.chat_settings import ChatSettingsRepository
 from bot.repositories.quota_state import CooldownStateRepository
 from bot.repositories.request_state import RequestStateRepository
+from bot.services.ai.model_registry import ModelRegistry
 from bot.services.ai.orchestrator import AIOrchestrator
+from bot.services.ai.router import ModelRouter
 from bot.services.telegram.context_builder import ReplyContextBuilder
 
 
@@ -37,6 +40,8 @@ async def build_application(settings: Settings) -> AppContainer:
     chat_settings_repository = ChatSettingsRepository(db)
     cooldown_repository = CooldownStateRepository(db)
     request_state_repository = RequestStateRepository(db)
+    model_registry = ModelRegistry.default()
+    model_router = ModelRouter(model_registry)
     openrouter_client = OpenRouterClient(
         api_key=settings.openrouter_api_key,
         base_url=settings.openrouter_base_url,
@@ -48,6 +53,7 @@ async def build_application(settings: Settings) -> AppContainer:
     ai_orchestrator = AIOrchestrator(
         openrouter_client=openrouter_client,
         chat_settings_repository=chat_settings_repository,
+        model_router=model_router,
         max_input_chars=settings.max_input_chars,
     )
     reply_context_builder = ReplyContextBuilder(
@@ -65,11 +71,13 @@ async def build_application(settings: Settings) -> AppContainer:
     dispatcher.include_router(fun_router)
     dispatcher.include_router(admin_control_router)
     dispatcher.include_router(admin_status_router)
-    dispatcher["settings"] = settings
-    dispatcher["ai_orchestrator"] = ai_orchestrator
-    dispatcher["chat_settings_repository"] = chat_settings_repository
-    dispatcher["cooldown_repository"] = cooldown_repository
-    dispatcher["request_state_repository"] = request_state_repository
-    dispatcher["reply_context_builder"] = reply_context_builder
+    dispatcher.include_router(admin_models_router)
+    dispatcher['settings'] = settings
+    dispatcher['ai_orchestrator'] = ai_orchestrator
+    dispatcher['chat_settings_repository'] = chat_settings_repository
+    dispatcher['cooldown_repository'] = cooldown_repository
+    dispatcher['request_state_repository'] = request_state_repository
+    dispatcher['reply_context_builder'] = reply_context_builder
+    dispatcher['model_registry'] = model_registry
 
     return AppContainer(dispatcher=dispatcher, ai_orchestrator=ai_orchestrator, db=db)
