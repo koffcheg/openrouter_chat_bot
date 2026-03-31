@@ -9,6 +9,7 @@ from bot.core.exceptions import ProviderRateLimitError, ProviderTimeoutError, Pr
 from bot.repositories.chat_settings import ChatSettingsRepository
 from bot.services.ai.router import ModelRouter
 from bot.services.health.status_service import StatusService
+from bot.utils.text import cleanup_model_text
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,7 @@ class AIOrchestrator:
                     system_prompt=self._system_prompt(chat_settings.system_prompt),
                     model=model_slug,
                 )
+                result = cleanup_model_text(result)
                 duration_ms = int((perf_counter() - started) * 1000)
                 self.status_service.record_success(chat_id=chat_id, model_slug=model_slug, duration_ms=duration_ms)
                 logger.info('AI request succeeded command=%s selected_model=%s served_model=%s attempted_models=%s fallback_used=%s duration_ms=%s', command, chat_settings.current_model_slug, model_slug, self.status_service.snapshot(chat_id=chat_id).attempted_models, self.status_service.snapshot(chat_id=chat_id).fallback_used, duration_ms)
@@ -89,7 +91,11 @@ class AIOrchestrator:
         return await self._complete(chat_id=chat_id, user_prompt=prompt, command='sum')
 
     async def fun(self, *, chat_id: int, text: str, context: str = '') -> str:
-        prompt = f'Respond in a playful, witty tone while staying safe and coherent.\n\nUser request:\n{text.strip()}'
+        prompt = (
+            'Reply with short, simple, broadly understandable humor for a general audience. '
+            'Avoid programmer-only jokes, niche technical references, and long explanations unless the user asks for them.\n\n'
+            f'User request:\n{text.strip()}'
+        )
         if context.strip():
             prompt += f'\n\nConversation context:\n{context.strip()}'
         return await self._complete(chat_id=chat_id, user_prompt=prompt, command='fun')

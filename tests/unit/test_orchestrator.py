@@ -26,7 +26,7 @@ class DummyClient:
 
     async def complete(self, *, prompt: str, system_prompt: str, model: str):
         self.calls.append((prompt, system_prompt, model))
-        return 'ok'
+        return '**I am a virtual assistant**\n\nПочемупрограммисты'
 
 
 def make_orchestrator(client: DummyClient) -> AIOrchestrator:
@@ -44,26 +44,30 @@ async def test_truth_includes_claim_and_context():
     client = DummyClient()
     orchestrator = make_orchestrator(client)
     result = await orchestrator.truth(chat_id=1, claim_text='claim body', context='ctx')
-    assert result == 'ok'
+    assert 'I am a virtual assistant' in result
     prompt, system_prompt, model = client.calls[0]
     assert 'Analyze the following claim using internal knowledge only.' in prompt
     assert 'What would need live verification.' in prompt
     assert 'Claim:\nclaim body' in prompt
     assert 'Conversation context:\nctx' in prompt
     assert 'Current UTC date:' in system_prompt
-    assert 'Never present yourself as the backend model vendor' in system_prompt
+    assert 'Always identify yourself as CumxAI' in system_prompt
     assert 'If the language is mixed or unclear, prefer Russian.' in system_prompt
     assert 'Do not use Markdown syntax' in system_prompt
+    assert 'general non-technical audience' in system_prompt
     assert model == 'nvidia/nemotron-3-super-120b-a12b:free'
 
 
 @pytest.mark.asyncio
-async def test_summary_and_fun_build_prompts():
+async def test_summary_and_fun_build_prompts_and_cleanup_output():
     client = DummyClient()
     orchestrator = make_orchestrator(client)
-    await orchestrator.summarize(chat_id=1, target_text='long text', context='reply ctx')
-    await orchestrator.fun(chat_id=1, text='make it funny', context='reply ctx')
+    summary_result = await orchestrator.summarize(chat_id=1, target_text='long text', context='reply ctx')
+    fun_result = await orchestrator.fun(chat_id=1, text='make it funny', context='reply ctx')
     assert 'Summarize the following text clearly and briefly.' in client.calls[0][0]
     assert 'Relevant conversation context:\nreply ctx' in client.calls[0][0]
-    assert 'Respond in a playful, witty tone' in client.calls[1][0]
-    assert 'Conversation context:\nreply ctx' in client.calls[1][0]
+    assert 'short, simple, broadly understandable humor' in client.calls[1][0]
+    assert 'Avoid programmer-only jokes' in client.calls[1][0]
+    assert '**' not in summary_result
+    assert 'Почему программисты' in summary_result
+    assert '**' not in fun_result
