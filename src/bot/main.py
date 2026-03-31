@@ -9,6 +9,7 @@ from aiogram.client.default import DefaultBotProperties
 from bot.bootstrap import build_application
 from bot.config.logging import configure_logging
 from bot.config.settings import get_settings
+from bot.services.telegram.command_setup import register_bot_commands
 
 
 async def run() -> None:
@@ -22,6 +23,7 @@ async def run() -> None:
     )
     container = await build_application(settings)
     try:
+        await register_bot_commands(bot)
         await container.dispatcher.start_polling(
             bot,
             allowed_updates=settings.polling_allowed_updates_list,
