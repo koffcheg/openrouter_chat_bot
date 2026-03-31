@@ -12,12 +12,22 @@ DEFAULT_SYSTEM_PROMPT = (
 START_TEXT = """Hi. I am CumxAI, a Telegram assistant for this chat.
 
 Use /help to see the available commands.
-Admins can also use /status, /models, /setmodel, /pause, and /resume."""
+Admins can also use /status, /models, /setmodel, /pause, /resume, /setlang, and /setstyle."""
 HELP_TEXT = """Available commands:
 /start — show a short welcome message
 /help — show this help
+/about — learn what CumxAI can do
 /ask [text] — ask the assistant a question
 /truth — reply to a message to analyze the claim
 /sum — reply to a message to summarize it
-/fun [text] — playful answer mode"""
+/fun [text] — playful answer mode
+
+Admin commands:
+/status — show current bot status
+/models — list available models
+/setmodel <slug> — set the current model
+/pause — pause bot replies in this chat
+/resume — resume bot replies in this chat
+/setlang auto|ru|uk|ua|en — set reply language
+/setstyle pretty|concise|playful — set response style"""
 DEFAULT_CHAT_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"

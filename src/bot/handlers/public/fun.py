@@ -2,6 +2,7 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
+from bot.core.exceptions import ProviderError, ProviderRateLimitError, ProviderTimeoutError, ProviderUnavailableError
 from bot.services.ai.orchestrator import AIOrchestrator
 from bot.services.telegram.context_builder import ReplyContextBuilder
 from bot.utils.telegram_split import split_telegram_text
@@ -27,6 +28,20 @@ async def fun_command(message: Message, ai_orchestrator: AIOrchestrator, reply_c
         await message.answer("Provide text after /fun or reply to a message.")
         return
     language_hint = detect_response_language(text, 'ru')
-    result = await ai_orchestrator.fun(chat_id=message.chat.id, text=text, context=context, language_hint=language_hint)
+    try:
+        await message.bot.send_chat_action(chat_id=message.chat.id, action='typing')
+        result = await ai_orchestrator.fun(chat_id=message.chat.id, text=text, context=context, language_hint=language_hint)
+    except ProviderTimeoutError:
+        await message.answer("The AI provider timed out. Please try again in a moment.", reply_to_message_id=target_reply_id)
+        return
+    except ProviderRateLimitError:
+        await message.answer("The AI provider rate-limited the request. Please try again shortly.", reply_to_message_id=target_reply_id)
+        return
+    except ProviderUnavailableError:
+        await message.answer("The AI provider is temporarily unavailable. Please try again later.", reply_to_message_id=target_reply_id)
+        return
+    except ProviderError:
+        await message.answer("The AI provider returned an invalid response. Please try again.", reply_to_message_id=target_reply_id)
+        return
     for chunk in split_telegram_text(render_pretty_html(result), settings.telegram_message_max_len):
         await message.answer(chunk, reply_to_message_id=target_reply_id)

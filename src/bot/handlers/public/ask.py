@@ -5,7 +5,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 
 from bot.config.settings import Settings
-from bot.core.exceptions import ProviderRateLimitError, ProviderTimeoutError, ProviderUnavailableError, UserInputError
+from bot.core.exceptions import ProviderError, ProviderRateLimitError, ProviderTimeoutError, ProviderUnavailableError, UserInputError
 from bot.repositories.chat_settings import ChatSettingsRepository
 from bot.repositories.quota_state import CooldownStateRepository
 from bot.repositories.request_state import RequestStateRepository
@@ -54,7 +54,7 @@ async def ask_command(
         target_reply_id = message.reply_to_message.message_id
         reply_context = reply_context_builder.message_text(message.reply_to_message)
         if not rest.strip():
-            rest = 'Answer based on the replied message.' if language_hint == 'en' else 'Ответь по смыслу на сообщение, на которое ответили.'
+            rest = 'Explain the replied message simply.' if language_hint == 'en' else 'Ответь по смыслу на сообщение, на которое ответили.'
 
     request_key = await request_state_repository.acquire(chat_id=message.chat.id, user_id=user_id)
     if request_key is None:
@@ -62,6 +62,7 @@ async def ask_command(
         return
 
     try:
+        await message.bot.send_chat_action(chat_id=message.chat.id, action='typing')
         answer = await ai_orchestrator.ask(chat_id=message.chat.id, text=rest, reply_context=reply_context, language_hint=language_hint)
         await cooldown_repository.touch(chat_id=message.chat.id, user_id=user_id)
     except UserInputError as exc:
@@ -75,6 +76,9 @@ async def ask_command(
         return
     except ProviderUnavailableError:
         await message.answer("The AI provider is temporarily unavailable. Please try again later.")
+        return
+    except ProviderError:
+        await message.answer("The AI provider returned an invalid response. Please try again.")
         return
     finally:
         await request_state_repository.release(chat_id=message.chat.id, user_id=user_id, request_key=request_key)

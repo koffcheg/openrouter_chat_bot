@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import httpx
 
 from bot.core.exceptions import ProviderError, ProviderRateLimitError, ProviderTimeoutError, ProviderUnavailableError
+
+logger = logging.getLogger(__name__)
 
 
 class OpenRouterClient:
@@ -45,10 +48,27 @@ class OpenRouterClient:
         if response.status_code >= 500:
             raise ProviderUnavailableError(f"OpenRouter request failed with status {response.status_code}")
         if response.status_code >= 400:
-            raise ProviderError(f"OpenRouter request failed with status {response.status_code}")
+            try:
+                data = response.json()
+            except Exception:
+                data = {}
+            message = data.get("error", {}).get("message") if isinstance(data, dict) else None
+            raise ProviderError(message or f"OpenRouter request failed with status {response.status_code}")
 
         data = response.json()
         try:
-            return data["choices"][0]["message"]["content"].strip()
+            content = data["choices"][0]["message"]["content"]
+            if isinstance(content, list):
+                parts = [part.get("text", "") for part in content if isinstance(part, dict)]
+                content = "".join(parts)
+            return str(content).strip()
         except (KeyError, IndexError, AttributeError, TypeError) as exc:
-            raise ProviderError("OpenRouter response did not contain message content") from exc
+            error_message = None
+            if isinstance(data, dict):
+                err = data.get("error")
+                if isinstance(err, dict):
+                    error_message = err.get("message")
+                elif isinstance(err, str):
+                    error_message = err
+            logger.warning("OpenRouter unexpected payload keys=%s", list(data.keys()) if isinstance(data, dict) else type(data).__name__)
+            raise ProviderError(error_message or "OpenRouter response did not contain message content") from exc
