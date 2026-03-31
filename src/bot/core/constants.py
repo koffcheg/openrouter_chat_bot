@@ -25,7 +25,7 @@ HELP_TEXT = """Available commands:
 Admin commands:
 /status — show current bot status
 /models — list available models
-/setmodel <slug> — set the current model
+/setmodel &lt;slug&gt; — set the current model
 /pause — pause bot replies in this chat
 /resume — resume bot replies in this chat
 /setlang auto|ru|uk|ua|en — set reply language
