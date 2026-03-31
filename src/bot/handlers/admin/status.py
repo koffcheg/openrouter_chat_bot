@@ -19,12 +19,13 @@ async def status_command(message: Message, settings: Settings, chat_settings_rep
     record = await chat_settings_repository.get_or_create(message.chat.id)
     runtime = status_service.snapshot(chat_id=message.chat.id)
     audit_count = await audit_log_repository.count_for_chat(message.chat.id)
-    fallback_chain = ' -> '.join(model_registry.slug for model_registry in [])
     fallback_chain = ' -> '.join(entry.slug for entry in model_registry.list_enabled() if entry.fallback_rank is not None)
     lines = [
         'Status:',
         f"paused: {'yes' if record.is_paused else 'no'}",
         f"configured_model: {record.current_model_slug}",
+        f"preferred_language: {record.preferred_language}",
+        f"response_style: {record.response_style}",
         f"fallback_chain: {fallback_chain or '-'}",
         f"last_command: {runtime.last_command or '-'}",
         f"selected_model: {runtime.selected_model or '-'}",

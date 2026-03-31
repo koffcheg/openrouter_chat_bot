@@ -47,25 +47,9 @@ async def build_application(settings: Settings) -> AppContainer:
     model_registry = ModelRegistry.default()
     model_router = ModelRouter(model_registry)
     status_service = StatusService()
-    openrouter_client = OpenRouterClient(
-        api_key=settings.openrouter_api_key,
-        base_url=settings.openrouter_base_url,
-        default_model=settings.openrouter_default_model,
-        timeout_seconds=settings.request_timeout_seconds,
-        http_referer=settings.openrouter_http_referer,
-        app_title=settings.openrouter_app_title,
-    )
-    ai_orchestrator = AIOrchestrator(
-        openrouter_client=openrouter_client,
-        chat_settings_repository=chat_settings_repository,
-        model_router=model_router,
-        status_service=status_service,
-        max_input_chars=settings.max_input_chars,
-    )
-    reply_context_builder = ReplyContextBuilder(
-        max_messages=settings.max_context_messages,
-        max_chars=settings.max_context_chars,
-    )
+    openrouter_client = OpenRouterClient(api_key=settings.openrouter_api_key, base_url=settings.openrouter_base_url, default_model=settings.openrouter_default_model, timeout_seconds=settings.request_timeout_seconds, http_referer=settings.openrouter_http_referer, app_title=settings.openrouter_app_title)
+    ai_orchestrator = AIOrchestrator(openrouter_client=openrouter_client, chat_settings_repository=chat_settings_repository, model_router=model_router, status_service=status_service, max_input_chars=settings.max_input_chars)
+    reply_context_builder = ReplyContextBuilder(max_messages=settings.max_context_messages, max_chars=settings.max_context_chars)
 
     dispatcher = Dispatcher()
     dispatcher.update.middleware(ErrorMiddleware())

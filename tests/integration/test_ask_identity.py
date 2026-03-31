@@ -10,15 +10,17 @@ class FakeMessage:
         self.text = text
         self.chat = SimpleNamespace(id=100)
         self.from_user = SimpleNamespace(id=42)
+        self.message_id = 501
+        self.reply_to_message = None
         self.answers = []
 
-    async def answer(self, text):
-        self.answers.append(text)
+    async def answer(self, text, reply_to_message_id=None):
+        self.answers.append((text, reply_to_message_id))
 
 
 class FakeChatSettingsRepo:
     async def get_or_create(self, chat_id):
-        return SimpleNamespace(is_paused=False)
+        return SimpleNamespace(is_paused=False, preferred_language='auto')
 
 
 class FakeCooldownRepo:
@@ -37,6 +39,12 @@ class FakeRequestStateRepo:
         return None
 
 
+class FakeReplyBuilder:
+    @staticmethod
+    def message_text(message):
+        return (message.text or '').strip()
+
+
 class FailIfCalledOrchestrator:
     async def ask(self, **kwargs):
         raise AssertionError('Model call should not happen for identity questions')
@@ -48,12 +56,12 @@ SETTINGS = SimpleNamespace(default_user_cooldown_seconds=20, telegram_message_ma
 @pytest.mark.asyncio
 async def test_ask_identity_english_is_rule_based():
     message = FakeMessage('/ask who are you?')
-    await ask_command(message, FailIfCalledOrchestrator(), FakeChatSettingsRepo(), FakeCooldownRepo(), FakeRequestStateRepo(), SETTINGS)
-    assert message.answers == ['<b>CumxAI</b> is the assistant for this chat.']
+    await ask_command(message, FailIfCalledOrchestrator(), FakeChatSettingsRepo(), FakeCooldownRepo(), FakeRequestStateRepo(), FakeReplyBuilder(), SETTINGS)
+    assert message.answers == [('<b>CumxAI</b> is the assistant for this chat.', 501)]
 
 
 @pytest.mark.asyncio
 async def test_ask_identity_russian_is_rule_based():
     message = FakeMessage('/ask Привет, кто ты?')
-    await ask_command(message, FailIfCalledOrchestrator(), FakeChatSettingsRepo(), FakeCooldownRepo(), FakeRequestStateRepo(), SETTINGS)
-    assert message.answers == ['<b>CumxAI</b> — ассистент этого чата.']
+    await ask_command(message, FailIfCalledOrchestrator(), FakeChatSettingsRepo(), FakeCooldownRepo(), FakeRequestStateRepo(), FakeReplyBuilder(), SETTINGS)
+    assert message.answers == [('<b>CumxAI</b> — ассистент этого чата.', 501)]

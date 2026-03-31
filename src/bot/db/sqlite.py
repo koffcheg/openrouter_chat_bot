@@ -16,6 +16,15 @@ SCHEMA_STATEMENTS = [
     )
     """,
     """
+    CREATE TABLE IF NOT EXISTS chat_preferences (
+        chat_id INTEGER PRIMARY KEY,
+        preferred_language TEXT NOT NULL DEFAULT 'auto',
+        response_style TEXT NOT NULL DEFAULT 'pretty',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS cooldown_state (
         chat_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,

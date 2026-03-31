@@ -3,7 +3,6 @@ from __future__ import annotations
 import html
 import re
 
-
 _MARKDOWN_BOLD = re.compile(r"\*\*(.+?)\*\*")
 _MARKDOWN_ITALIC = re.compile(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)")
 _MULTI_SPACE = re.compile(r"[ \t]{2,}")
@@ -24,15 +23,7 @@ def detect_response_language(text: str, default: str = 'ru') -> str:
 
 def is_identity_question(text: str) -> bool:
     cleaned = ' '.join(text.lower().split())
-    patterns = (
-        'who are you',
-        'what are you',
-        'what is your name',
-        'кто ты',
-        'кто ты такой',
-        'как тебя зовут',
-        'что ты такое',
-    )
+    patterns = ('who are you', 'what are you', 'what is your name', 'кто ты', 'кто ты такой', 'как тебя зовут', 'что ты такое')
     return any(pattern in cleaned for pattern in patterns)
 
 
@@ -82,3 +73,13 @@ def render_pretty_html(text: str) -> str:
     result = '\n'.join(rendered)
     result = re.sub(r'\n{3,}', '\n\n', result)
     return result.strip()
+
+
+def truth_template(rendered_html: str, language: str) -> str:
+    prefix = '<b>Проверка утверждения</b>\n' if language != 'en' else '<b>Claim analysis</b>\n'
+    return prefix + rendered_html
+
+
+def summary_template(rendered_html: str, language: str) -> str:
+    prefix = '<b>Кратко</b>\n' if language != 'en' else '<b>Summary</b>\n'
+    return prefix + rendered_html

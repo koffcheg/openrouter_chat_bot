@@ -5,7 +5,7 @@ from aiogram.types import Message
 from bot.services.ai.orchestrator import AIOrchestrator
 from bot.services.telegram.context_builder import ReplyContextBuilder
 from bot.utils.telegram_split import split_telegram_text
-from bot.utils.text import render_pretty_html
+from bot.utils.text import detect_response_language, render_pretty_html, truth_template
 
 router = Router(name="public_truth")
 
@@ -21,6 +21,8 @@ async def truth_command(message: Message, ai_orchestrator: AIOrchestrator, reply
         await message.answer("The replied message does not contain text to analyze.")
         return
     context = reply_context_builder.build_ancestor_context(replied)
-    result = await ai_orchestrator.truth(chat_id=message.chat.id, claim_text=claim_text, context=context)
-    for chunk in split_telegram_text(render_pretty_html(result), settings.telegram_message_max_len):
-        await message.answer(chunk)
+    language_hint = detect_response_language(claim_text, 'ru')
+    result = await ai_orchestrator.truth(chat_id=message.chat.id, claim_text=claim_text, context=context, language_hint=language_hint)
+    rendered = truth_template(render_pretty_html(result), language_hint)
+    for chunk in split_telegram_text(rendered, settings.telegram_message_max_len):
+        await message.answer(chunk, reply_to_message_id=replied.message_id)
