@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from html import escape
-
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
@@ -13,6 +11,7 @@ from bot.repositories.quota_state import CooldownStateRepository
 from bot.repositories.request_state import RequestStateRepository
 from bot.services.ai.orchestrator import AIOrchestrator
 from bot.utils.telegram_split import split_telegram_text
+from bot.utils.text import detect_response_language, identity_answer, is_identity_question, render_pretty_html
 
 router = Router(name="public_ask")
 
@@ -44,6 +43,11 @@ async def ask_command(
         await message.answer(f"Cooldown active. Please wait {remaining} seconds before sending another request.")
         return
 
+    if is_identity_question(rest):
+        for chunk in split_telegram_text(identity_answer(detect_response_language(rest)), settings.telegram_message_max_len):
+            await message.answer(chunk)
+        return
+
     request_key = await request_state_repository.acquire(chat_id=message.chat.id, user_id=user_id)
     if request_key is None:
         await message.answer("You already have an active request in progress.")
@@ -67,5 +71,5 @@ async def ask_command(
     finally:
         await request_state_repository.release(chat_id=message.chat.id, user_id=user_id, request_key=request_key)
 
-    for chunk in split_telegram_text(escape(answer), settings.telegram_message_max_len):
+    for chunk in split_telegram_text(render_pretty_html(answer), settings.telegram_message_max_len):
         await message.answer(chunk)
