@@ -11,7 +11,7 @@ TEXTS = {
         'start': """Привет. Я CumxAI, ассистент этого чата.
 
 Используй /help, чтобы посмотреть доступные команды.
-Администраторы также могут использовать /status, /models, /setmodel, /pause, /resume, /setlang и /setstyle.""",
+Администраторы также могут использовать /status, /models, /setmodel, /pause, /resume, /setlang, /setstyle, /viewsettings и /resetsettings.""",
         'help': """Доступные команды:
 /start — показать короткое приветствие
 /help — показать эту справку
@@ -28,7 +28,9 @@ TEXTS = {
 /pause — поставить ответы бота на паузу
 /resume — возобновить ответы бота
 /setlang auto|ru|ua|en — язык ответов
-/setstyle pretty|concise|playful — стиль ответов""",
+/setstyle pretty|concise|playful — стиль ответов
+/viewsettings — показать текущие настройки
+/resetsettings — сбросить настройки чата""",
         'about': """<b>CumxAI</b> — ассистент этого чата.
 
 Что умеет:
@@ -48,7 +50,7 @@ TEXTS = {
         'start': """Привіт. Я CumxAI, асистент цього чату.
 
 Використовуй /help, щоб побачити доступні команди.
-Адміністратори також можуть використовувати /status, /models, /setmodel, /pause, /resume, /setlang і /setstyle.""",
+Адміністратори також можуть використовувати /status, /models, /setmodel, /pause, /resume, /setlang, /setstyle, /viewsettings і /resetsettings.""",
         'help': """Доступні команди:
 /start — показати коротке привітання
 /help — показати цю довідку
@@ -65,7 +67,9 @@ TEXTS = {
 /pause — поставити відповіді бота на паузу
 /resume — відновити відповіді бота
 /setlang auto|ru|ua|en — мова відповідей
-/setstyle pretty|concise|playful — стиль відповідей""",
+/setstyle pretty|concise|playful — стиль відповідей
+/viewsettings — показати поточні налаштування
+/resetsettings — скинути налаштування чату""",
         'about': """<b>CumxAI</b> — асистент цього чату.
 
 Що вміє:
@@ -85,7 +89,7 @@ TEXTS = {
         'start': """Hi. I am CumxAI, the assistant for this chat.
 
 Use /help to see the available commands.
-Admins can also use /status, /models, /setmodel, /pause, /resume, /setlang, and /setstyle.""",
+Admins can also use /status, /models, /setmodel, /pause, /resume, /setlang, /setstyle, /viewsettings, and /resetsettings.""",
         'help': """Available commands:
 /start — show a short welcome message
 /help — show this help
@@ -102,7 +106,9 @@ Admin commands:
 /pause — pause bot replies in this chat
 /resume — resume bot replies in this chat
 /setlang auto|ru|ua|en — set reply language
-/setstyle pretty|concise|playful — set response style""",
+/setstyle pretty|concise|playful — set response style
+/viewsettings — show current settings
+/resetsettings — reset chat settings""",
         'about': """<b>CumxAI</b> is the assistant for this chat.
 
 What it can do:

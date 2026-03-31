@@ -108,3 +108,15 @@ class ChatSettingsRepository(BaseRepository):
         await self.db.commit()
         record.response_style = response_style
         return record
+
+    async def reset_preferences(self, chat_id: int) -> ChatSettingsRecord:
+        record = await self.get_or_create(chat_id)
+        now = datetime.now(timezone.utc).isoformat()
+        await self.db.execute(
+            "INSERT INTO chat_preferences (chat_id, preferred_language, response_style, created_at, updated_at) VALUES (?, 'auto', 'pretty', ?, ?) ON CONFLICT(chat_id) DO UPDATE SET preferred_language = 'auto', response_style = 'pretty', updated_at = excluded.updated_at",
+            (chat_id, now, now),
+        )
+        await self.db.commit()
+        record.preferred_language = 'auto'
+        record.response_style = 'pretty'
+        return record
