@@ -37,8 +37,10 @@ async def setlang_command(message: Message, settings: Settings, chat_settings_re
     raw_text = message.text or ''
     _, _, value = raw_text.partition(' ')
     value = value.strip().lower()
+    if value == 'ua':
+        value = 'uk'
     if value not in {'auto', 'ru', 'uk', 'en'}:
-        await message.answer('Usage: /setlang auto|ru|uk|en')
+        await message.answer('Usage: /setlang auto|ru|uk|ua|en')
         return
     previous = await chat_settings_repository.get_or_create(message.chat.id)
     updated = await chat_settings_repository.set_language(message.chat.id, value)

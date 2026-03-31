@@ -5,9 +5,17 @@ from aiogram.types import Message
 from bot.services.ai.orchestrator import AIOrchestrator
 from bot.services.telegram.context_builder import ReplyContextBuilder
 from bot.utils.telegram_split import split_telegram_text
-from bot.utils.text import detect_response_language, render_pretty_html, summary_template
+from bot.utils.text import detect_response_language, render_pretty_html
 
 router = Router(name="public_summary")
+
+
+def _summary_prefix(language: str) -> str:
+    if language == 'en':
+        return 'Summary\n'
+    if language == 'uk':
+        return 'Коротко\n'
+    return 'Кратко\n'
 
 
 @router.message(Command("sum"))
@@ -27,6 +35,6 @@ async def summary_command(message: Message, ai_orchestrator: AIOrchestrator, rep
         return
     language_hint = detect_response_language(target_text, 'ru')
     result = await ai_orchestrator.summarize(chat_id=message.chat.id, target_text=target_text, context=context, language_hint=language_hint)
-    rendered = summary_template(render_pretty_html(result), language_hint)
+    rendered = _summary_prefix(language_hint) + render_pretty_html(result)
     for chunk in split_telegram_text(rendered, settings.telegram_message_max_len):
         await message.answer(chunk, reply_to_message_id=target_reply_id)
