@@ -47,7 +47,6 @@ async def test_truth_includes_claim_and_context():
     assert 'I am a virtual assistant' in result
     prompt, system_prompt, model = client.calls[0]
     assert 'Analyze the following claim using internal knowledge only.' in prompt
-    assert 'What would need live verification.' in prompt
     assert 'Claim:\nclaim body' in prompt
     assert 'Conversation context:\nctx' in prompt
     assert 'Current UTC date:' in system_prompt
@@ -55,6 +54,8 @@ async def test_truth_includes_claim_and_context():
     assert 'If the language is mixed or unclear, prefer Russian.' in system_prompt
     assert 'Do not use Markdown syntax' in system_prompt
     assert 'general non-technical audience' in system_prompt
+    assert 'Use exactly four sections with these headings and no others:' in system_prompt
+    assert 'What would need live verification' in system_prompt
     assert model == 'nvidia/nemotron-3-super-120b-a12b:free'
 
 
