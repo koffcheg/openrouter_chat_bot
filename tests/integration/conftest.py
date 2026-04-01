@@ -4,10 +4,10 @@ import pytest
 
 import bot.handlers.public.fun as fun_mod
 import bot.handlers.public.summary as sum_mod
+import bot.services.ai.orchestrator as orch
 from bot.services.ai.model_registry import ModelRegistry
 from bot.services.ai.router import ModelRouter
 from bot.services.health.status_service import StatusService
-import bot.services.ai.orchestrator as orch
 
 
 async def _noop_send_chat_action(*args, **kwargs):
@@ -20,7 +20,8 @@ def integration_compat(request, monkeypatch):
 
     orig_init = orch.AIOrchestrator.__init__
     def _init(self, *, openrouter_client, chat_settings_repository, model_router=None, status_service=None, max_input_chars):
-        return orig_init(self,
+        return orig_init(
+            self,
             openrouter_client=openrouter_client,
             chat_settings_repository=chat_settings_repository,
             model_router=model_router or ModelRouter(ModelRegistry.default()),
@@ -71,7 +72,7 @@ def integration_compat(request, monkeypatch):
         if 'language_hint' in inspect.signature(ai_orchestrator.summarize).parameters:
             kwargs['language_hint'] = sum_mod.detect_response_language(target_text, 'ru')
         result = await ai_orchestrator.summarize(**kwargs)
-        for chunk in sum_mod.split_for_telegram(sum_mod.render_for_telegram_html(result), settings.telegram_message_max_len):
+        for chunk in sum_mod.split_telegram_text(sum_mod.render_pretty_html(result), settings.telegram_message_max_len):
             await message.answer(chunk, reply_to_message_id=rid)
     monkeypatch.setattr(sum_mod, 'summary_command', _sum, raising=True)
 
@@ -94,6 +95,6 @@ def integration_compat(request, monkeypatch):
         if 'language_hint' in inspect.signature(ai_orchestrator.fun).parameters:
             kwargs['language_hint'] = fun_mod.detect_response_language(text, 'ru')
         result = await ai_orchestrator.fun(**kwargs)
-        for chunk in fun_mod.split_for_telegram(fun_mod.render_for_telegram_html(result), settings.telegram_message_max_len):
+        for chunk in fun_mod.split_telegram_text(fun_mod.render_pretty_html(result), settings.telegram_message_max_len):
             await message.answer(chunk, reply_to_message_id=rid)
     monkeypatch.setattr(fun_mod, 'fun_command', _fun, raising=True)

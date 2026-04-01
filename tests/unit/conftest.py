@@ -12,7 +12,8 @@ def unit_compat(request, monkeypatch):
 
     orig_init = orch.AIOrchestrator.__init__
     def _init(self, *, openrouter_client, chat_settings_repository, model_router=None, status_service=None, max_input_chars):
-        return orig_init(self,
+        return orig_init(
+            self,
             openrouter_client=openrouter_client,
             chat_settings_repository=chat_settings_repository,
             model_router=model_router or ModelRouter(ModelRegistry.default()),
