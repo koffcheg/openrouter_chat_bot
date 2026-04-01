@@ -48,7 +48,7 @@ SETTINGS = SimpleNamespace(telegram_message_max_len=4096)
 async def test_fun_uses_command_text():
     message = FakeMessage('/fun make it funny')
     await fun_command(message, FakeOrchestrator(), FakeBuilder(), SETTINGS)
-    assert message.answers == ['FUN::make it funny::']
+    assert message.answers == ['<b>FUN::make it funny::</b>']
 
 
 @pytest.mark.asyncio
@@ -56,4 +56,4 @@ async def test_fun_uses_reply_text_when_command_text_missing():
     replied = FakeMessage('reply text')
     message = FakeMessage('/fun', reply_to_message=replied)
     await fun_command(message, FakeOrchestrator(), FakeBuilder(), SETTINGS)
-    assert message.answers == ['FUN::reply text::CTX']
+    assert message.answers == ['<b>FUN::reply text::CTX</b>']

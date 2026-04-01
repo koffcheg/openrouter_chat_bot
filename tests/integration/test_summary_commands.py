@@ -49,7 +49,7 @@ async def test_summary_uses_reply_text_when_present():
     replied = FakeMessage('some text')
     message = FakeMessage('/sum', reply_to_message=replied)
     await summary_command(message, FakeOrchestrator(), FakeBuilder(), SETTINGS)
-    assert message.answers == ['Кратко\nSUM::some text::CTX']
+    assert message.answers == ['Summary\nSUM::some text::CTX']
 
 
 @pytest.mark.asyncio
