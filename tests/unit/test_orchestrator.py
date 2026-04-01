@@ -21,11 +21,14 @@ class DummyRepo:
 
 
 class DummyClient:
-    def __init__(self):
+    def __init__(self, responses=None):
         self.calls = []
+        self.responses = list(responses or ['**I am a virtual assistant**\n\nПочемупрограммисты'])
 
     async def complete(self, *, prompt: str, system_prompt: str, model: str):
         self.calls.append((prompt, system_prompt, model))
+        if self.responses:
+            return self.responses.pop(0)
         return '**I am a virtual assistant**\n\nПочемупрограммисты'
 
 
@@ -61,7 +64,7 @@ async def test_truth_includes_claim_and_context():
 
 @pytest.mark.asyncio
 async def test_summary_and_fun_build_prompts_and_cleanup_output():
-    client = DummyClient()
+    client = DummyClient(['**I am a virtual assistant**\n\nПочемупрограммисты', '**I am a virtual assistant**\n\nПочемупрограммисты'])
     orchestrator = make_orchestrator(client)
     summary_result = await orchestrator.summarize(chat_id=1, target_text='long text', context='reply ctx')
     fun_result = await orchestrator.fun(chat_id=1, text='make it funny', context='reply ctx')
@@ -72,3 +75,17 @@ async def test_summary_and_fun_build_prompts_and_cleanup_output():
     assert '**' not in summary_result
     assert 'Почему программисты' in summary_result
     assert '**' not in fun_result
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_repairs_broken_mixed_language_output_once():
+    broken = 'У presently нет科学依据表明 love to purple связана со schizophrenia.'
+    repaired = 'Немає наукових підстав вважати, що любов до фіолетового кольору пов’язана із шизофренією.'
+    client = DummyClient([broken, repaired])
+    orchestrator = make_orchestrator(client)
+    result = await orchestrator.ask(chat_id=1, text='question', language_hint='uk')
+    assert 'фіолетового' in result
+    assert len(client.calls) == 2
+    repair_prompt, repair_system_prompt, _ = client.calls[1]
+    assert 'Rewrite the answer below in clean Ukrainian only.' in repair_prompt
+    assert 'Reply in Ukrainian.' in repair_system_prompt

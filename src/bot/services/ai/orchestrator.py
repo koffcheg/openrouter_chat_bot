@@ -7,6 +7,7 @@ from time import perf_counter
 from bot.clients.openrouter import OpenRouterClient
 from bot.core.exceptions import ProviderRateLimitError, ProviderTimeoutError, ProviderUnavailableError, UserInputError
 from bot.repositories.chat_settings import ChatSettingsRepository
+from bot.services.ai.output_validator import build_repair_prompt, validate_output
 from bot.services.ai.prompt_policies import command_policy_text, normalize_language_code, normalize_truth_sections
 from bot.services.ai.router import ModelRouter
 from bot.services.health.status_service import StatusService
@@ -47,6 +48,20 @@ class AIOrchestrator:
             "Do not claim to have live internet access or real-time data unless it is provided in the prompt."
         )
 
+    def _post_process_result(self, *, text: str, command: str, language: str) -> str:
+        result = cleanup_model_text(text)
+        if command == 'truth':
+            result = normalize_truth_sections(result, language)
+        return result
+
+    async def _repair_once(self, *, text: str, system_prompt: str, model_slug: str, command: str, language: str) -> str:
+        repaired = await self.openrouter_client.complete(
+            prompt=build_repair_prompt(text=text, language=language, command=command),
+            system_prompt=system_prompt,
+            model=model_slug,
+        )
+        return self._post_process_result(text=repaired, command=command, language=language)
+
     async def _complete(self, *, chat_id: int, user_prompt: str, command: str, language_hint: str | None = None) -> str:
         cleaned = user_prompt.strip()
         if not cleaned:
@@ -58,7 +73,7 @@ class AIOrchestrator:
         preferred_language = normalize_language_code(getattr(chat_settings, 'preferred_language', 'auto'), fallback='auto')
         response_style = getattr(chat_settings, 'response_style', 'pretty')
         current_model_slug = getattr(chat_settings, 'current_model_slug', None)
-        system_prompt = getattr(chat_settings, 'system_prompt', 'You are a helpful assistant.')
+        base_system_prompt = getattr(chat_settings, 'system_prompt', 'You are a helpful assistant.')
 
         detected_language = normalize_language_code(language_hint or detect_response_language(cleaned, 'ru'))
         target_language = detected_language if preferred_language == 'auto' else preferred_language
@@ -69,14 +84,20 @@ class AIOrchestrator:
         for model_slug in model_sequence:
             self.status_service.record_attempt(chat_id=chat_id, model_slug=model_slug)
             try:
+                system_prompt = self._system_prompt(base_prompt=base_system_prompt, language=target_language, style=response_style, command=command)
                 result = await self.openrouter_client.complete(
                     prompt=cleaned,
-                    system_prompt=self._system_prompt(base_prompt=system_prompt, language=target_language, style=response_style, command=command),
+                    system_prompt=system_prompt,
                     model=model_slug,
                 )
-                result = cleanup_model_text(result)
-                if command == 'truth':
-                    result = normalize_truth_sections(result, target_language)
+                result = self._post_process_result(text=result, command=command, language=target_language)
+                validation = validate_output(text=result, language=target_language, command=command)
+                if not validation.is_valid:
+                    logger.warning('AI output validation failed command=%s model=%s reason=%s; attempting repair', command, model_slug, validation.reason)
+                    repaired = await self._repair_once(text=result, system_prompt=system_prompt, model_slug=model_slug, command=command, language=target_language)
+                    repaired_validation = validate_output(text=repaired, language=target_language, command=command)
+                    if repaired_validation.is_valid or repaired.strip():
+                        result = repaired
                 duration_ms = int((perf_counter() - started) * 1000)
                 self.status_service.record_success(chat_id=chat_id, model_slug=model_slug, duration_ms=duration_ms)
                 logger.info('AI request succeeded command=%s selected_model=%s served_model=%s attempted_models=%s fallback_used=%s duration_ms=%s', command, current_model_slug, model_slug, self.status_service.snapshot(chat_id=chat_id).attempted_models, self.status_service.snapshot(chat_id=chat_id).fallback_used, duration_ms)
