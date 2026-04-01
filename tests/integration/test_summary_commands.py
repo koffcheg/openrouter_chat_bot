@@ -56,4 +56,4 @@ async def test_summary_uses_reply_text_when_present():
 async def test_summary_requires_reply_or_inline_text():
     message = FakeMessage('/sum')
     await summary_command(message, FakeOrchestrator(), FakeBuilder(), SETTINGS)
-    assert message.answers == ['Reply to a message or provide text after /sum.']
+    assert message.answers == ['Ответьте на сообщение или добавьте текст после /sum.']
