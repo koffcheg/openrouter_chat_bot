@@ -24,6 +24,15 @@ def truth_section_titles(language: str) -> tuple[str, str, str, str]:
     return ('Оценка', 'Известные факты', 'Неопределённость', 'Что потребовало бы живой проверки')
 
 
+def summary_heading_titles(language: str) -> tuple[str, ...]:
+    normalized = normalize_language_code(language)
+    if normalized == 'en':
+        return ('Summary', 'Short summary', 'Brief summary')
+    if normalized == 'uk':
+        return ('Коротко', 'Коротке резюме', 'Стислий підсумок')
+    return ('Кратко', 'Краткое резюме', 'Короткий итог')
+
+
 def command_policy_text(command: str, language: str) -> str:
     normalized = normalize_language_code(language)
     language_name = {'ru': 'Russian', 'uk': 'Ukrainian', 'en': 'English'}.get(normalized, 'Russian')
@@ -83,3 +92,18 @@ def normalize_truth_sections(text: str, language: str) -> str:
         else:
             lines.append(raw_line)
     return '\n'.join(lines)
+
+
+def normalize_summary_output(text: str, language: str) -> str:
+    titles = {title.lower() for title in summary_heading_titles(language)}
+    lines = [line for line in text.split('\n')]
+    cleaned: list[str] = []
+    skipped_heading = 0
+    for line in lines:
+        stripped = re.sub(r'[:：]\s*$', '', line.strip()).lower()
+        if skipped_heading < 2 and stripped in titles:
+            skipped_heading += 1
+            continue
+        cleaned.append(line)
+    result = '\n'.join(cleaned).strip()
+    return result

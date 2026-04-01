@@ -3,6 +3,7 @@ from __future__ import annotations
 from aiogram.types import Message
 
 from bot.config.settings import Settings
+from bot.i18n.messages import resolve_reply_language, text as i18n_text
 
 
 async def is_admin_or_owner(message: Message, settings: Settings) -> bool:
@@ -16,5 +17,7 @@ async def is_admin_or_owner(message: Message, settings: Settings) -> bool:
 async def ensure_admin(message: Message, settings: Settings) -> bool:
     if await is_admin_or_owner(message, settings):
         return True
-    await message.answer("Only chat admins can use this command.")
+    detected = getattr(message, 'text', None) or getattr(message, 'caption', None) or ''
+    lang = resolve_reply_language('auto', 'en' if detected and detected.isascii() else 'ru')
+    await message.answer(i18n_text('admin_only', lang))
     return False
