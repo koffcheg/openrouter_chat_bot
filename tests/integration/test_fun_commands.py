@@ -56,4 +56,4 @@ async def test_fun_uses_reply_text_when_command_text_missing():
     replied = FakeMessage('reply text')
     message = FakeMessage('/fun', reply_to_message=replied)
     await fun_command(message, FakeOrchestrator(), FakeBuilder(), SETTINGS)
-    assert message.answers == ['<b>FUN::reply text::CTX</b>']
+    assert message.answers == ['FUN::reply text::CTX']
