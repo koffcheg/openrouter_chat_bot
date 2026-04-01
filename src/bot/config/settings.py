@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from bot.core.constants import DEFAULT_CHAT_MODEL
@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     polling_drop_pending_updates: bool = Field(default=False, alias="POLLING_DROP_PENDING_UPDATES")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @field_validator('telegram_parse_mode', mode='before')
+    @classmethod
+    def normalize_parse_mode(cls, value: str | None) -> str:
+        normalized = (value or '').strip()
+        return normalized or 'HTML'
 
     @property
     def owner_ids(self) -> list[int]:

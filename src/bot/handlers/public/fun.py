@@ -6,7 +6,7 @@ from bot.core.exceptions import ProviderError, ProviderRateLimitError, ProviderT
 from bot.i18n.messages import text as i18n_text
 from bot.services.ai.orchestrator import AIOrchestrator
 from bot.services.telegram.context_builder import ReplyContextBuilder
-from bot.utils.telegram_split import split_telegram_text
+from bot.services.telegram.reply_sender import send_html_chunks
 from bot.utils.text import detect_response_language, render_pretty_html
 
 router = Router(name="public_fun")
@@ -44,5 +44,4 @@ async def fun_command(message: Message, ai_orchestrator: AIOrchestrator, reply_c
     except ProviderError:
         await message.answer(i18n_text('provider_invalid', language_hint), reply_to_message_id=target_reply_id)
         return
-    for chunk in split_telegram_text(render_pretty_html(result), settings.telegram_message_max_len):
-        await message.answer(chunk, reply_to_message_id=target_reply_id)
+    await send_html_chunks(message, render_pretty_html(result), settings.telegram_message_max_len, reply_to_message_id=target_reply_id)
