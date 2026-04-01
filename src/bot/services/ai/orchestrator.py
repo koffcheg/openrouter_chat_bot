@@ -7,6 +7,7 @@ from time import perf_counter
 from bot.clients.openrouter import OpenRouterClient
 from bot.core.exceptions import ProviderRateLimitError, ProviderTimeoutError, ProviderUnavailableError, UserInputError
 from bot.repositories.chat_settings import ChatSettingsRepository
+from bot.services.ai.prompt_policies import command_policy_text, normalize_language_code, normalize_truth_sections
 from bot.services.ai.router import ModelRouter
 from bot.services.health.status_service import StatusService
 from bot.utils.text import cleanup_model_text, detect_response_language
@@ -22,24 +23,27 @@ class AIOrchestrator:
         self.status_service = status_service
         self.max_input_chars = max_input_chars
 
-    def _system_prompt(self, *, base_prompt: str, language: str, style: str) -> str:
+    def _system_prompt(self, *, base_prompt: str, language: str, style: str, command: str) -> str:
         today = datetime.now(timezone.utc).date().isoformat()
         style_text = {
             'pretty': 'Use short paragraphs, simple bullets when helpful, and readable section labels.',
             'concise': 'Be brief and direct. Prefer compact answers.',
             'playful': 'Use a light, friendly tone while staying clear and safe.',
         }.get(style, 'Use short paragraphs and readable structure.')
+        normalized_language = normalize_language_code(language)
         language_text = {
             'ru': 'Reply in Russian.',
             'uk': 'Reply in Ukrainian.',
             'en': 'Reply in English.',
-            'auto': f"Reply in {language}.",
-        }.get(language, f"Reply in {language}.")
+            'auto': f"Reply in {normalized_language}.",
+        }.get(normalized_language, f"Reply in {normalized_language}.")
+        command_text = command_policy_text(command, normalized_language)
         return (
             f"{base_prompt}\n\n"
             f"Current UTC date: {today}.\n"
             f"{language_text}\n"
             f"{style_text}\n"
+            f"{command_text}\n"
             "Do not claim to have live internet access or real-time data unless it is provided in the prompt."
         )
 
@@ -51,12 +55,13 @@ class AIOrchestrator:
             raise UserInputError(f'Input is too long. Maximum length is {self.max_input_chars} characters.')
 
         chat_settings = await self.chat_settings_repository.get_or_create(chat_id)
-        preferred_language = getattr(chat_settings, 'preferred_language', 'auto')
+        preferred_language = normalize_language_code(getattr(chat_settings, 'preferred_language', 'auto'), fallback='auto')
         response_style = getattr(chat_settings, 'response_style', 'pretty')
         current_model_slug = getattr(chat_settings, 'current_model_slug', None)
         system_prompt = getattr(chat_settings, 'system_prompt', 'You are a helpful assistant.')
 
-        target_language = preferred_language if preferred_language != 'auto' else (language_hint or detect_response_language(cleaned, 'ru'))
+        detected_language = normalize_language_code(language_hint or detect_response_language(cleaned, 'ru'))
+        target_language = detected_language if preferred_language == 'auto' else preferred_language
         model_sequence = self.model_router.model_sequence(current_model_slug)
         self.status_service.begin_request(chat_id=chat_id, command=command, selected_model=current_model_slug, fallback_chain=model_sequence)
         started = perf_counter()
@@ -66,10 +71,12 @@ class AIOrchestrator:
             try:
                 result = await self.openrouter_client.complete(
                     prompt=cleaned,
-                    system_prompt=self._system_prompt(base_prompt=system_prompt, language=target_language, style=response_style),
+                    system_prompt=self._system_prompt(base_prompt=system_prompt, language=target_language, style=response_style, command=command),
                     model=model_slug,
                 )
                 result = cleanup_model_text(result)
+                if command == 'truth':
+                    result = normalize_truth_sections(result, target_language)
                 duration_ms = int((perf_counter() - started) * 1000)
                 self.status_service.record_success(chat_id=chat_id, model_slug=model_slug, duration_ms=duration_ms)
                 logger.info('AI request succeeded command=%s selected_model=%s served_model=%s attempted_models=%s fallback_used=%s duration_ms=%s', command, current_model_slug, model_slug, self.status_service.snapshot(chat_id=chat_id).attempted_models, self.status_service.snapshot(chat_id=chat_id).fallback_used, duration_ms)
@@ -94,8 +101,7 @@ class AIOrchestrator:
     async def truth(self, *, chat_id: int, claim_text: str, context: str = '', language_hint: str | None = None) -> str:
         prompt = (
             'Analyze the following claim using internal knowledge only. '
-            'Do not present the answer as live verification. '
-            'Structure the answer with four sections: Assessment, Known facts, Uncertainty, What would need live verification.\n\n'
+            'Do not present the answer as live verification.\n\n'
             f'Claim:\n{claim_text.strip()}'
         )
         if context.strip():

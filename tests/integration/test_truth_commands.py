@@ -48,4 +48,4 @@ SETTINGS = SimpleNamespace(telegram_message_max_len=4096)
 async def test_truth_requires_reply():
     message = FakeMessage('/truth')
     await truth_command(message, FakeOrchestrator(), FakeBuilder(), SETTINGS)
-    assert message.answers == ['Reply to a message to use /truth.']
+    assert message.answers == ['Ответьте на сообщение, чтобы использовать /truth.']
