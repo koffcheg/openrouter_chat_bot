@@ -12,7 +12,7 @@ from bot.repositories.quota_state import CooldownStateRepository
 from bot.repositories.request_state import RequestStateRepository
 from bot.services.ai.orchestrator import AIOrchestrator
 from bot.services.telegram.context_builder import ReplyContextBuilder
-from bot.utils.telegram_split import split_telegram_text
+from bot.services.telegram.reply_sender import send_html_chunks
 from bot.utils.text import detect_response_language, identity_answer, is_identity_question, render_pretty_html
 
 router = Router(name="public_ask")
@@ -47,8 +47,12 @@ async def ask_command(
     language_hint = ui_language
 
     if is_identity_question(rest):
-        for chunk in split_telegram_text(identity_answer(language_hint), settings.telegram_message_max_len):
-            await message.answer(chunk, reply_to_message_id=message.reply_to_message.message_id if getattr(message, 'reply_to_message', None) else message.message_id)
+        await send_html_chunks(
+            message,
+            identity_answer(language_hint),
+            settings.telegram_message_max_len,
+            reply_to_message_id=message.reply_to_message.message_id if getattr(message, 'reply_to_message', None) else message.message_id,
+        )
         return
 
     reply_context = ''
@@ -86,5 +90,4 @@ async def ask_command(
     finally:
         await request_state_repository.release(chat_id=message.chat.id, user_id=user_id, request_key=request_key)
 
-    for chunk in split_telegram_text(render_pretty_html(answer), settings.telegram_message_max_len):
-        await message.answer(chunk, reply_to_message_id=target_reply_id)
+    await send_html_chunks(message, render_pretty_html(answer), settings.telegram_message_max_len, reply_to_message_id=target_reply_id)

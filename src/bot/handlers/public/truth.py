@@ -6,7 +6,7 @@ from bot.core.exceptions import ProviderError, ProviderRateLimitError, ProviderT
 from bot.i18n.messages import text as i18n_text
 from bot.services.ai.orchestrator import AIOrchestrator
 from bot.services.telegram.context_builder import ReplyContextBuilder
-from bot.utils.telegram_split import split_telegram_text
+from bot.services.telegram.reply_sender import send_html_chunks
 from bot.utils.text import detect_response_language, render_pretty_html
 
 router = Router(name="public_truth")
@@ -48,5 +48,4 @@ async def truth_command(message: Message, ai_orchestrator: AIOrchestrator, reply
         await message.answer(i18n_text('provider_invalid', language_hint), reply_to_message_id=replied.message_id)
         return
     rendered = _truth_prefix(language_hint) + render_pretty_html(result)
-    for chunk in split_telegram_text(rendered, settings.telegram_message_max_len):
-        await message.answer(chunk, reply_to_message_id=replied.message_id)
+    await send_html_chunks(message, rendered, settings.telegram_message_max_len, reply_to_message_id=replied.message_id)
