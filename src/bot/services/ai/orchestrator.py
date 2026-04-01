@@ -49,10 +49,16 @@ class AIOrchestrator:
             raise UserInputError('Please provide text for this command.')
         if len(cleaned) > self.max_input_chars:
             raise UserInputError(f'Input is too long. Maximum length is {self.max_input_chars} characters.')
+
         chat_settings = await self.chat_settings_repository.get_or_create(chat_id)
-        target_language = chat_settings.preferred_language if chat_settings.preferred_language != 'auto' else (language_hint or detect_response_language(cleaned, 'ru'))
-        model_sequence = self.model_router.model_sequence(chat_settings.current_model_slug)
-        self.status_service.begin_request(chat_id=chat_id, command=command, selected_model=chat_settings.current_model_slug, fallback_chain=model_sequence)
+        preferred_language = getattr(chat_settings, 'preferred_language', 'auto')
+        response_style = getattr(chat_settings, 'response_style', 'pretty')
+        current_model_slug = getattr(chat_settings, 'current_model_slug', None)
+        system_prompt = getattr(chat_settings, 'system_prompt', 'You are a helpful assistant.')
+
+        target_language = preferred_language if preferred_language != 'auto' else (language_hint or detect_response_language(cleaned, 'ru'))
+        model_sequence = self.model_router.model_sequence(current_model_slug)
+        self.status_service.begin_request(chat_id=chat_id, command=command, selected_model=current_model_slug, fallback_chain=model_sequence)
         started = perf_counter()
         last_exc = None
         for model_slug in model_sequence:
@@ -60,18 +66,18 @@ class AIOrchestrator:
             try:
                 result = await self.openrouter_client.complete(
                     prompt=cleaned,
-                    system_prompt=self._system_prompt(base_prompt=chat_settings.system_prompt, language=target_language, style=chat_settings.response_style),
+                    system_prompt=self._system_prompt(base_prompt=system_prompt, language=target_language, style=response_style),
                     model=model_slug,
                 )
                 result = cleanup_model_text(result)
                 duration_ms = int((perf_counter() - started) * 1000)
                 self.status_service.record_success(chat_id=chat_id, model_slug=model_slug, duration_ms=duration_ms)
-                logger.info('AI request succeeded command=%s selected_model=%s served_model=%s attempted_models=%s fallback_used=%s duration_ms=%s', command, chat_settings.current_model_slug, model_slug, self.status_service.snapshot(chat_id=chat_id).attempted_models, self.status_service.snapshot(chat_id=chat_id).fallback_used, duration_ms)
+                logger.info('AI request succeeded command=%s selected_model=%s served_model=%s attempted_models=%s fallback_used=%s duration_ms=%s', command, current_model_slug, model_slug, self.status_service.snapshot(chat_id=chat_id).attempted_models, self.status_service.snapshot(chat_id=chat_id).fallback_used, duration_ms)
                 return result
             except (ProviderTimeoutError, ProviderRateLimitError, ProviderUnavailableError) as exc:
                 last_exc = exc
                 self.status_service.record_provider_error(chat_id=chat_id, error_text=str(exc))
-                logger.warning('AI request transient failure command=%s selected_model=%s attempted_model=%s error=%s', command, chat_settings.current_model_slug, model_slug, exc)
+                logger.warning('AI request transient failure command=%s selected_model=%s attempted_model=%s error=%s', command, current_model_slug, model_slug, exc)
                 continue
         duration_ms = int((perf_counter() - started) * 1000)
         if last_exc is not None:
