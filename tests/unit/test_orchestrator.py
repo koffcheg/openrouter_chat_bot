@@ -44,7 +44,7 @@ def make_orchestrator(client: DummyClient) -> AIOrchestrator:
 
 @pytest.mark.asyncio
 async def test_truth_includes_claim_and_context():
-    client = DummyClient()
+    client = DummyClient(['Assessment:\nI am a virtual assistant\nKnown facts:\n- one\nUncertainty:\n- two\nWhat would need live verification:\n- three'])
     orchestrator = make_orchestrator(client)
     result = await orchestrator.truth(chat_id=1, claim_text='claim body', context='ctx')
     assert 'I am a virtual assistant' in result

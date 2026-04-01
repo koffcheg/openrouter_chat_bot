@@ -27,14 +27,6 @@ def validate_output(*, text: str, language: str, command: str) -> OutputValidati
     if _MIXED_TOKEN.search(candidate):
         return OutputValidationResult(False, 'mixed_script_token')
 
-    latin_words = len(_LATIN_WORD.findall(candidate))
-    cyrillic_words = len(_CYRILLIC_WORD.findall(candidate))
-
-    if normalized_language in {'ru', 'uk'} and latin_words >= 3 and latin_words > max(1, cyrillic_words // 3):
-        return OutputValidationResult(False, 'too_many_latin_words')
-    if normalized_language == 'en' and cyrillic_words >= 3 and cyrillic_words > max(1, latin_words // 3):
-        return OutputValidationResult(False, 'too_many_cyrillic_words')
-
     if command == 'truth':
         english_titles = truth_section_titles('en')
         localized_titles = truth_section_titles(normalized_language)
@@ -43,6 +35,14 @@ def validate_output(*, text: str, language: str, command: str) -> OutputValidati
         missing_titles = [title for title in localized_titles if title not in candidate]
         if missing_titles:
             return OutputValidationResult(False, 'missing_truth_titles')
+
+    latin_words = len(_LATIN_WORD.findall(candidate))
+    cyrillic_words = len(_CYRILLIC_WORD.findall(candidate))
+
+    if normalized_language in {'ru', 'uk'} and latin_words >= 3 and latin_words > max(1, cyrillic_words // 3):
+        return OutputValidationResult(False, 'too_many_latin_words')
+    if normalized_language == 'en' and cyrillic_words >= 3 and cyrillic_words > max(1, latin_words // 3):
+        return OutputValidationResult(False, 'too_many_cyrillic_words')
 
     return OutputValidationResult(True)
 

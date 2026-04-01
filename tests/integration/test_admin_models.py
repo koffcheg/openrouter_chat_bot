@@ -23,11 +23,11 @@ class FakeRepo:
         self.current = 'nvidia/nemotron-3-super-120b-a12b:free'
 
     async def get_or_create(self, chat_id):
-        return SimpleNamespace(chat_id=chat_id, is_paused=False, system_prompt='sys', current_model_slug=self.current)
+        return SimpleNamespace(chat_id=chat_id, is_paused=False, system_prompt='sys', current_model_slug=self.current, preferred_language='ru')
 
     async def set_model(self, chat_id, model_slug):
         self.current = model_slug
-        return SimpleNamespace(chat_id=chat_id, is_paused=False, system_prompt='sys', current_model_slug=self.current)
+        return SimpleNamespace(chat_id=chat_id, is_paused=False, system_prompt='sys', current_model_slug=self.current, preferred_language='ru')
 
 
 class FakeAuditRepo:
@@ -47,7 +47,7 @@ async def test_models_command_lists_available_models():
     repo = FakeRepo()
     await models_command(message, SETTINGS, repo, ModelRegistry.default())
     assert message.answers
-    assert 'Available models:' in message.answers[0]
+    assert 'Доступные модели:' in message.answers[0]
     assert 'openrouter/free' in message.answers[0]
 
 
@@ -58,7 +58,7 @@ async def test_setmodel_command_updates_current_model_and_audits():
     audit = FakeAuditRepo()
     await setmodel_command(message, SETTINGS, repo, ModelRegistry.default(), audit)
     assert repo.current == 'openrouter/free'
-    assert message.answers == ['Current model set to openrouter/free']
+    assert message.answers == ['Текущая модель установлена: openrouter/free']
     assert audit.calls[0]['action'] == 'setmodel'
 
 
@@ -69,5 +69,5 @@ async def test_setmodel_command_rejects_unknown_slug():
     audit = FakeAuditRepo()
     await setmodel_command(message, SETTINGS, repo, ModelRegistry.default(), audit)
     assert repo.current == 'nvidia/nemotron-3-super-120b-a12b:free'
-    assert message.answers == ['Unknown or disabled model slug. Use /models to see the allowed list.']
+    assert message.answers == ['Неизвестная или отключённая модель. Используйте /models, чтобы увидеть допустимый список.']
     assert audit.calls == []
