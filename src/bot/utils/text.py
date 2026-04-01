@@ -9,6 +9,10 @@ _MULTI_SPACE = re.compile(r"[ \t]{2,}")
 _MISSING_SPACE = re.compile(r"(?<=[A-Za-zА-Яа-яЁё])(?=[A-ZА-ЯЁ][a-zа-яё])")
 _CYRILLIC = re.compile(r"[А-Яа-яЁёІіЇїЄє]")
 _LATIN = re.compile(r"[A-Za-z]")
+_COMMON_GLUED_WORDS = {
+    'Theclaim': 'The claim',
+    'Почемупрограммисты': 'Почему программисты',
+}
 
 
 def detect_response_language(text: str, default: str = 'ru') -> str:
@@ -40,6 +44,8 @@ def cleanup_model_text(text: str) -> str:
     cleaned = _MARKDOWN_ITALIC.sub(r'\1', cleaned)
     cleaned = cleaned.replace('```', '')
     cleaned = _MISSING_SPACE.sub(' ', cleaned)
+    for broken, fixed in _COMMON_GLUED_WORDS.items():
+        cleaned = cleaned.replace(broken, fixed)
     lines = []
     for line in cleaned.split('\n'):
         normalized = _MULTI_SPACE.sub(' ', line).strip()

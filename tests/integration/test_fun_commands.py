@@ -5,20 +5,30 @@ import pytest
 from bot.handlers.public.fun import fun_command
 
 
+class FakeBot:
+    async def send_chat_action(self, **kwargs):
+        return None
+
+
 class FakeMessage:
+    _next_message_id = 1
+
     def __init__(self, text='', reply_to_message=None):
         self.text = text
         self.caption = None
         self.reply_to_message = reply_to_message
         self.chat = SimpleNamespace(id=123)
+        self.message_id = FakeMessage._next_message_id
+        FakeMessage._next_message_id += 1
+        self.bot = FakeBot()
         self.answers = []
 
-    async def answer(self, text):
+    async def answer(self, text, **kwargs):
         self.answers.append(text)
 
 
 class FakeOrchestrator:
-    async def fun(self, *, chat_id, text, context=''):
+    async def fun(self, *, chat_id, text, context='', language_hint=None):
         return f'FUN::{text}::{context}'
 
 

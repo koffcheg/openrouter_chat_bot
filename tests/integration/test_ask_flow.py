@@ -12,6 +12,9 @@ class DummyChatSettingsRepository:
         class Settings:
             system_prompt = 'System'
             current_model_slug = 'nvidia/nemotron-3-super-120b-a12b:free'
+            preferred_language = 'auto'
+            response_style = 'pretty'
+
         return Settings()
 
 
@@ -45,6 +48,7 @@ async def test_orchestrator_ask_happy_path() -> None:
     prompt, system_prompt, model = client.calls[0]
     assert prompt == 'Hello'
     assert 'Current UTC date:' in system_prompt
+    assert 'Reply in English.' in system_prompt
     assert model == 'nvidia/nemotron-3-super-120b-a12b:free'
 
 
