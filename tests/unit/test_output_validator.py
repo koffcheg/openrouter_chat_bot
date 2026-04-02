@@ -13,6 +13,13 @@ def test_validate_output_rejects_mixed_script_token():
     assert result.reason == 'mixed_script_token'
 
 
+def test_validate_output_rejects_wrong_truth_heading_language():
+    text = 'Assessment:\ntext\nKnown facts:\n- one\nUncertainty:\n- two\nWhat would need live verification:\n- three'
+    result = validate_output(text=text, language='ru', command='truth')
+    assert result.is_valid is False
+    assert result.reason == 'wrong_truth_titles_language'
+
+
 def test_validate_output_accepts_clean_truth_with_localized_titles():
     text = 'Оцінка:\nТекст\nВідомі факти:\n- факт\nНевизначеність:\n- пункт\nЩо потребувало б живої перевірки:\n- ще пункт'
     result = validate_output(text=text, language='uk', command='truth')

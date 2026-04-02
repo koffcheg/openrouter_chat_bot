@@ -44,7 +44,7 @@ def make_orchestrator(client: DummyClient) -> AIOrchestrator:
 
 @pytest.mark.asyncio
 async def test_truth_includes_claim_and_context():
-    client = DummyClient()
+    client = DummyClient(['Assessment:\nI am a virtual assistant\nKnown facts:\n- one\nUncertainty:\n- two\nWhat would need live verification:\n- three'])
     orchestrator = make_orchestrator(client)
     result = await orchestrator.truth(chat_id=1, claim_text='claim body', context='ctx')
     assert 'I am a virtual assistant' in result
@@ -89,3 +89,15 @@ async def test_orchestrator_repairs_broken_mixed_language_output_once():
     repair_prompt, repair_system_prompt, _ = client.calls[1]
     assert 'Rewrite the answer below in clean Ukrainian only.' in repair_prompt
     assert 'Reply in Ukrainian.' in repair_system_prompt
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_uses_safe_fallback_when_repair_is_still_invalid():
+    broken = 'Assessment\ntexto minimузировать\nKnown facts\n- one'
+    still_broken = 'Assessment\ntexto minimузировать\nKnown facts\n- one'
+    client = DummyClient([broken, still_broken])
+    orchestrator = make_orchestrator(client)
+    result = await orchestrator.truth(chat_id=1, claim_text='claim', context='ctx', language_hint='ru')
+    assert 'Качество ответа оказалось нестабильным' in result
+    assert 'Оценка:' in result
+    assert 'Известные факты:' in result

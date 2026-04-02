@@ -1,4 +1,4 @@
-from bot.services.ai.prompt_policies import command_policy_text, normalize_language_code, normalize_truth_sections, truth_section_titles
+from bot.services.ai.prompt_policies import command_policy_text, normalize_language_code, normalize_summary_output, normalize_truth_sections, truth_section_titles
 
 
 def test_normalize_language_code_maps_ua_to_uk():
@@ -27,3 +27,9 @@ def test_normalize_truth_sections_rewrites_headings():
     assert 'Известные факты:' in normalized
     assert 'Неопределённость:' in normalized
     assert 'Что потребовало бы живой проверки:' in normalized
+
+
+def test_normalize_summary_output_strips_duplicate_summary_titles():
+    text = 'Summary\nShort summary\n• one\n• two'
+    normalized = normalize_summary_output(text, 'en')
+    assert normalized == '• one\n• two'
