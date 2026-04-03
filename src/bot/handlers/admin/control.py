@@ -55,9 +55,9 @@ def _texts(lang: str) -> dict[str, str]:
 
 @router.message(Command("pause"))
 async def pause_command(message: Message, settings: Settings, chat_settings_repository: ChatSettingsRepository, audit_log_repository: AuditLogRepository) -> None:
-    if not await ensure_admin(message, settings):
-        return
     previous = await chat_settings_repository.get_or_create(message.chat.id)
+    if not await ensure_admin(message, settings, previous.preferred_language):
+        return
     lang = _ui_lang(previous.preferred_language)
     texts = _texts(lang)
     updated = await chat_settings_repository.set_paused(message.chat.id, True)
@@ -67,9 +67,9 @@ async def pause_command(message: Message, settings: Settings, chat_settings_repo
 
 @router.message(Command("resume"))
 async def resume_command(message: Message, settings: Settings, chat_settings_repository: ChatSettingsRepository, audit_log_repository: AuditLogRepository) -> None:
-    if not await ensure_admin(message, settings):
-        return
     previous = await chat_settings_repository.get_or_create(message.chat.id)
+    if not await ensure_admin(message, settings, previous.preferred_language):
+        return
     lang = _ui_lang(previous.preferred_language)
     texts = _texts(lang)
     updated = await chat_settings_repository.set_paused(message.chat.id, False)
@@ -79,30 +79,30 @@ async def resume_command(message: Message, settings: Settings, chat_settings_rep
 
 @router.message(Command("setlang"))
 async def setlang_command(message: Message, settings: Settings, chat_settings_repository: ChatSettingsRepository, audit_log_repository: AuditLogRepository) -> None:
-    if not await ensure_admin(message, settings):
-        return
     previous = await chat_settings_repository.get_or_create(message.chat.id)
-    lang = _ui_lang(previous.preferred_language)
-    texts = _texts(lang)
+    if not await ensure_admin(message, settings, previous.preferred_language):
+        return
     raw_text = message.text or ''
     _, _, value = raw_text.partition(' ')
     value = value.strip().lower()
     if value == 'ua':
         value = 'uk'
+    current_texts = _texts(_ui_lang(previous.preferred_language))
     if value not in {'auto', 'ru', 'uk', 'en'}:
-        await message.answer(texts['setlang_usage'])
+        await message.answer(current_texts['setlang_usage'])
         return
     updated = await chat_settings_repository.set_language(message.chat.id, value)
     await audit_log_repository.append(chat_id=message.chat.id, actor_user_id=message.from_user.id if message.from_user else 0, action='setlang', old_value={'preferred_language': previous.preferred_language}, new_value={'preferred_language': updated.preferred_language})
     shown = 'ua' if updated.preferred_language == 'uk' else updated.preferred_language
-    await message.answer(texts['lang_set'].format(value=shown))
+    new_texts = _texts(_ui_lang(updated.preferred_language))
+    await message.answer(new_texts['lang_set'].format(value=shown))
 
 
 @router.message(Command("setstyle"))
 async def setstyle_command(message: Message, settings: Settings, chat_settings_repository: ChatSettingsRepository, audit_log_repository: AuditLogRepository) -> None:
-    if not await ensure_admin(message, settings):
-        return
     previous = await chat_settings_repository.get_or_create(message.chat.id)
+    if not await ensure_admin(message, settings, previous.preferred_language):
+        return
     lang = _ui_lang(previous.preferred_language)
     texts = _texts(lang)
     raw_text = message.text or ''
@@ -118,9 +118,9 @@ async def setstyle_command(message: Message, settings: Settings, chat_settings_r
 
 @router.message(Command("viewsettings"))
 async def viewsettings_command(message: Message, settings: Settings, chat_settings_repository: ChatSettingsRepository) -> None:
-    if not await ensure_admin(message, settings):
-        return
     record = await chat_settings_repository.get_or_create(message.chat.id)
+    if not await ensure_admin(message, settings, record.preferred_language):
+        return
     lang = _ui_lang(record.preferred_language)
     texts = _texts(lang)
     shown = 'ua' if record.preferred_language == 'uk' else record.preferred_language
@@ -134,9 +134,9 @@ async def viewsettings_command(message: Message, settings: Settings, chat_settin
 
 @router.message(Command("resetsettings"))
 async def resetsettings_command(message: Message, settings: Settings, chat_settings_repository: ChatSettingsRepository, audit_log_repository: AuditLogRepository) -> None:
-    if not await ensure_admin(message, settings):
-        return
     previous = await chat_settings_repository.get_or_create(message.chat.id)
+    if not await ensure_admin(message, settings, previous.preferred_language):
+        return
     lang = _ui_lang(previous.preferred_language)
     texts = _texts(lang)
     updated = await chat_settings_repository.reset_preferences(message.chat.id)

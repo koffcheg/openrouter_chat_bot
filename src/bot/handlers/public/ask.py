@@ -18,6 +18,16 @@ from bot.utils.text import detect_response_language, identity_answer, is_identit
 router = Router(name="public_ask")
 
 
+def _user_input_message(exc: UserInputError, ui_language: str, settings: Settings) -> str:
+    message = str(exc)
+    if message == 'Please provide text for this command.':
+        return i18n_text('ask_need_text', ui_language)
+    too_long_prefix = 'Input is too long. Maximum length is '
+    if message.startswith(too_long_prefix):
+        return i18n_text('ask_too_long', ui_language, max_chars=settings.max_input_chars)
+    return message
+
+
 @router.message(Command("ask"), F.text)
 async def ask_command(
     message: Message,
@@ -73,7 +83,7 @@ async def ask_command(
         answer = await ai_orchestrator.ask(chat_id=message.chat.id, text=rest, reply_context=reply_context, language_hint=language_hint)
         await cooldown_repository.touch(chat_id=message.chat.id, user_id=user_id)
     except UserInputError as exc:
-        await message.answer(str(exc))
+        await message.answer(_user_input_message(exc, ui_language, settings))
         return
     except ProviderTimeoutError:
         await message.answer(i18n_text('provider_timeout', ui_language))

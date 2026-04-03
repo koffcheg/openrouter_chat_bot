@@ -36,6 +36,16 @@ _MESSAGES = {
         'ru': 'У вас уже есть активный запрос в обработке.',
         'uk': 'У вас уже є активний запит в обробці.',
     },
+    'ask_need_text': {
+        'en': 'Please provide text for this command.',
+        'ru': 'Пожалуйста, добавьте текст к этой команде.',
+        'uk': 'Будь ласка, додайте текст до цієї команди.',
+    },
+    'ask_too_long': {
+        'en': 'Input is too long. Maximum length is {max_chars} characters.',
+        'ru': 'Текст слишком длинный. Максимальная длина — {max_chars} символов.',
+        'uk': 'Текст надто довгий. Максимальна довжина — {max_chars} символів.',
+    },
     'truth_reply_required': {
         'en': 'Reply to a message to use /truth.',
         'ru': 'Ответьте на сообщение, чтобы использовать /truth.',

@@ -25,13 +25,6 @@ class ModelRegistry:
                     label='Nemotron 3 Super (free)',
                     enabled=True,
                     is_default=True,
-                    fallback_rank=20,
-                ),
-                ModelEntry(
-                    slug='openrouter/free',
-                    label='OpenRouter Free Router',
-                    enabled=True,
-                    is_default=False,
                     fallback_rank=10,
                 ),
                 ModelEntry(
@@ -39,7 +32,14 @@ class ModelRegistry:
                     label='Llama 3.3 70B Instruct (free)',
                     enabled=True,
                     is_default=False,
-                    fallback_rank=30,
+                    fallback_rank=20,
+                ),
+                ModelEntry(
+                    slug='openrouter/free',
+                    label='OpenRouter Free Router',
+                    enabled=True,
+                    is_default=False,
+                    fallback_rank=90,
                 ),
             ]
         )
