@@ -36,6 +36,16 @@ _MESSAGES = {
         'ru': 'У вас уже есть активный запрос в обработке.',
         'uk': 'У вас уже є активний запит в обробці.',
     },
+    'ask_need_text': {
+        'en': 'Please provide text for this command.',
+        'ru': 'Пожалуйста, добавьте текст к этой команде.',
+        'uk': 'Будь ласка, додайте текст до цієї команди.',
+    },
+    'ask_too_long': {
+        'en': 'Input is too long. Maximum length is {max_chars} characters.',
+        'ru': 'Текст слишком длинный. Максимальная длина — {max_chars} символов.',
+        'uk': 'Текст надто довгий. Максимальна довжина — {max_chars} символів.',
+    },
     'truth_reply_required': {
         'en': 'Reply to a message to use /truth.',
         'ru': 'Ответьте на сообщение, чтобы использовать /truth.',
@@ -75,6 +85,11 @@ _MESSAGES = {
         'en': 'The AI provider returned an invalid response. Please try again.',
         'ru': 'AI-провайдер вернул некорректный ответ. Попробуйте ещё раз.',
         'uk': 'AI-провайдер повернув некоректну відповідь. Спробуйте ще раз.',
+    },
+    'admin_only': {
+        'en': 'Only chat admins can use this command.',
+        'ru': 'Только администраторы чата могут использовать эту команду.',
+        'uk': 'Лише адміністратори чату можуть використовувати цю команду.',
     },
 }
 
