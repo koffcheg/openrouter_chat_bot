@@ -53,10 +53,10 @@ def _texts(lang: str) -> dict[str, str]:
 
 @router.message(Command('models'))
 async def models_command(message: Message, settings: Settings, chat_settings_repository: ChatSettingsRepository, model_registry: ModelRegistry) -> None:
-    if not await ensure_admin(message, settings):
-        return
     current = await chat_settings_repository.get_or_create(message.chat.id)
-    lang = _ui_lang(current.preferred_language)
+    if not await ensure_admin(message, settings, getattr(current, 'preferred_language', 'ru')):
+        return
+    lang = _ui_lang(getattr(current, 'preferred_language', 'ru'))
     texts = _texts(lang)
     lines = [texts['title']]
     for entry in model_registry.list_enabled():
@@ -74,10 +74,10 @@ async def models_command(message: Message, settings: Settings, chat_settings_rep
 
 @router.message(Command('setmodel'))
 async def setmodel_command(message: Message, settings: Settings, chat_settings_repository: ChatSettingsRepository, model_registry: ModelRegistry, audit_log_repository: AuditLogRepository) -> None:
-    if not await ensure_admin(message, settings):
-        return
     current = await chat_settings_repository.get_or_create(message.chat.id)
-    lang = _ui_lang(current.preferred_language)
+    if not await ensure_admin(message, settings, getattr(current, 'preferred_language', 'ru')):
+        return
+    lang = _ui_lang(getattr(current, 'preferred_language', 'ru'))
     texts = _texts(lang)
     raw_text = message.text or ''
     _, _, slug = raw_text.partition(' ')

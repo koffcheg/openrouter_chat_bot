@@ -8,7 +8,7 @@ from bot.clients.openrouter import OpenRouterClient
 from bot.core.exceptions import ProviderRateLimitError, ProviderTimeoutError, ProviderUnavailableError, UserInputError
 from bot.repositories.chat_settings import ChatSettingsRepository
 from bot.services.ai.output_validator import build_repair_prompt, validate_output
-from bot.services.ai.prompt_policies import command_policy_text, normalize_language_code, normalize_summary_output, normalize_truth_sections, truth_section_titles
+from bot.services.ai.prompt_policies import command_policy_text, normalize_language_code, normalize_truth_sections, truth_section_titles
 from bot.services.ai.router import ModelRouter
 from bot.services.health.status_service import StatusService
 from bot.utils.text import cleanup_model_text, detect_response_language
@@ -68,10 +68,10 @@ class AIOrchestrator:
                 body = 'Качество ответа оказалось нестабильным после автоматического исправления. Повторите запрос.'
             return '\n'.join([f'{titles[0]}:', body, f'{titles[1]}:', '• -', f'{titles[2]}:', '• -', f'{titles[3]}:', '• -'])
         if normalized_language == 'en':
-            return 'The answer quality was unstable after automatic repair. Please repeat the request.'
+            return 'I could not produce a reliable answer just now. Please rephrase or try again.'
         if normalized_language == 'uk':
-            return 'Якість відповіді виявилася нестабільною після автоматичного виправлення. Повторіть запит.'
-        return 'Качество ответа оказалось нестабильным после автоматического исправления. Повторите запрос.'
+            return 'Я не зміг сформувати надійну відповідь саме зараз. Спробуйте переформулювати запит або повторити його.'
+        return 'Я не смог сформировать надёжный ответ прямо сейчас. Попробуйте переформулировать запрос или повторить его.'
 
     async def _repair_once(self, *, text: str, system_prompt: str, model_slug: str, command: str, language: str) -> str:
         repaired = await self.openrouter_client.complete(

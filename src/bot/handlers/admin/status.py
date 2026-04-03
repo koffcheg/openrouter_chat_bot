@@ -96,9 +96,9 @@ def _texts(lang: str) -> dict[str, str]:
 
 @router.message(Command("status"))
 async def status_command(message: Message, settings: Settings, chat_settings_repository: ChatSettingsRepository, model_registry: ModelRegistry, status_service: StatusService, audit_log_repository: AuditLogRepository) -> None:
-    if not await ensure_admin(message, settings):
-        return
     record = await chat_settings_repository.get_or_create(message.chat.id)
+    if not await ensure_admin(message, settings, record.preferred_language):
+        return
     lang = _ui_lang(record.preferred_language)
     texts = _texts(lang)
     runtime = status_service.snapshot(chat_id=message.chat.id)
@@ -108,7 +108,7 @@ async def status_command(message: Message, settings: Settings, chat_settings_rep
         texts['title'],
         f"{texts['paused']}: {texts['yes'] if record.is_paused else texts['no']}",
         f"{texts['configured_model']}: {record.current_model_slug}",
-        f"{texts['preferred_language']}: {record.preferred_language}",
+        f"{texts['preferred_language']}: {'ua' if record.preferred_language == 'uk' else record.preferred_language}",
         f"{texts['response_style']}: {record.response_style}",
         f"{texts['fallback_chain']}: {fallback_chain or '-'}",
         f"{texts['last_command']}: {runtime.last_command or '-'}",
