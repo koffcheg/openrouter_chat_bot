@@ -52,6 +52,8 @@ class AIOrchestrator:
         result = cleanup_model_text(text)
         if command == 'truth':
             result = normalize_truth_sections(result, language)
+        if command == 'sum':
+            result = normalize_summary_output(result, language)
         return result
 
     def _quality_fallback(self, *, command: str, language: str) -> str:
