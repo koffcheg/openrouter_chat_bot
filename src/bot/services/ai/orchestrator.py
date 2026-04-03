@@ -96,7 +96,7 @@ class AIOrchestrator:
 
         detected_language = normalize_language_code(language_hint or detect_response_language(cleaned, 'ru'))
         target_language = detected_language if preferred_language == 'auto' else preferred_language
-        model_sequence = self.model_router.model_sequence(current_model_slug)
+        model_sequence = self.model_router.model_sequence(current_model_slug, target_language)
         self.status_service.begin_request(chat_id=chat_id, command=command, selected_model=current_model_slug, fallback_chain=model_sequence)
         started = perf_counter()
         last_exc = None
