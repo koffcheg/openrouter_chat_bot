@@ -20,7 +20,7 @@ class FakeMessage:
 
 class FakeRepo:
     async def get_or_create(self, chat_id):
-        return SimpleNamespace(chat_id=chat_id, is_paused=False, system_prompt='sys', current_model_slug='meta-llama/llama-3.3-70b-instruct:free')
+        return SimpleNamespace(chat_id=chat_id, is_paused=False, system_prompt='sys', current_model_slug='meta-llama/llama-3.3-70b-instruct:free', preferred_language='ru')
 
 
 class FakeAuditRepo:
@@ -42,8 +42,8 @@ async def test_status_command_includes_model_observability_fields():
     status_service.record_success(chat_id=100, model_slug='openrouter/free', duration_ms=250)
     await status_command(message, SETTINGS, FakeRepo(), ModelRegistry.default(), status_service, FakeAuditRepo())
     text = message.answers[0]
-    assert 'configured_model: meta-llama/llama-3.3-70b-instruct:free' in text
-    assert 'attempted_models: meta-llama/llama-3.3-70b-instruct:free, openrouter/free' in text
-    assert 'last_served_model: openrouter/free' in text
-    assert 'fallback_used: yes' in text
-    assert 'audit_entries: 3' in text
+    assert 'настроенная_модель: meta-llama/llama-3.3-70b-instruct:free' in text
+    assert 'попытки_моделей: meta-llama/llama-3.3-70b-instruct:free, openrouter/free' in text
+    assert 'последняя_модель_ответа: openrouter/free' in text
+    assert 'fallback_использован: да' in text
+    assert 'записей_аудита: 3' in text

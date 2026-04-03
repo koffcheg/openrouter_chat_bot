@@ -27,18 +27,22 @@ def validate_output(*, text: str, language: str, command: str) -> OutputValidati
     if _MIXED_TOKEN.search(candidate):
         return OutputValidationResult(False, 'mixed_script_token')
 
+    if command == 'truth':
+        english_titles = truth_section_titles('en')
+        localized_titles = truth_section_titles(normalized_language)
+        if normalized_language != 'en' and any(title in candidate for title in english_titles):
+            return OutputValidationResult(False, 'wrong_truth_titles_language')
+        missing_titles = [title for title in localized_titles if title not in candidate]
+        if missing_titles:
+            return OutputValidationResult(False, 'missing_truth_titles')
+
     latin_words = len(_LATIN_WORD.findall(candidate))
     cyrillic_words = len(_CYRILLIC_WORD.findall(candidate))
 
-    if normalized_language in {'ru', 'uk'} and latin_words >= 6 and latin_words > cyrillic_words // 2:
+    if normalized_language in {'ru', 'uk'} and latin_words >= 3 and latin_words > max(1, cyrillic_words // 3):
         return OutputValidationResult(False, 'too_many_latin_words')
-    if normalized_language == 'en' and cyrillic_words >= 4 and cyrillic_words > latin_words // 2:
+    if normalized_language == 'en' and cyrillic_words >= 3 and cyrillic_words > max(1, latin_words // 3):
         return OutputValidationResult(False, 'too_many_cyrillic_words')
-
-    if command == 'truth':
-        missing_titles = [title for title in truth_section_titles(normalized_language) if title not in candidate]
-        if missing_titles:
-            return OutputValidationResult(False, 'missing_truth_titles')
 
     return OutputValidationResult(True)
 

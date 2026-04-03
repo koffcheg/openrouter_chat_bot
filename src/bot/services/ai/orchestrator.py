@@ -8,7 +8,7 @@ from bot.clients.openrouter import OpenRouterClient
 from bot.core.exceptions import ProviderRateLimitError, ProviderTimeoutError, ProviderUnavailableError, UserInputError
 from bot.repositories.chat_settings import ChatSettingsRepository
 from bot.services.ai.output_validator import build_repair_prompt, validate_output
-from bot.services.ai.prompt_policies import command_policy_text, normalize_language_code, normalize_truth_sections
+from bot.services.ai.prompt_policies import command_policy_text, normalize_language_code, normalize_summary_output, normalize_truth_sections, truth_section_titles
 from bot.services.ai.router import ModelRouter
 from bot.services.health.status_service import StatusService
 from bot.utils.text import cleanup_model_text, detect_response_language
@@ -52,7 +52,26 @@ class AIOrchestrator:
         result = cleanup_model_text(text)
         if command == 'truth':
             result = normalize_truth_sections(result, language)
+        if command == 'sum':
+            result = normalize_summary_output(result, language)
         return result
+
+    def _quality_fallback(self, *, command: str, language: str) -> str:
+        normalized_language = normalize_language_code(language)
+        if command == 'truth':
+            titles = truth_section_titles(normalized_language)
+            if normalized_language == 'en':
+                body = 'The answer quality was unstable after automatic repair. Please repeat the request.'
+            elif normalized_language == 'uk':
+                body = 'Якість відповіді виявилася нестабільною після автоматичного виправлення. Повторіть запит.'
+            else:
+                body = 'Качество ответа оказалось нестабильным после автоматического исправления. Повторите запрос.'
+            return '\n'.join([f'{titles[0]}:', body, f'{titles[1]}:', '• -', f'{titles[2]}:', '• -', f'{titles[3]}:', '• -'])
+        if normalized_language == 'en':
+            return 'The answer quality was unstable after automatic repair. Please repeat the request.'
+        if normalized_language == 'uk':
+            return 'Якість відповіді виявилася нестабільною після автоматичного виправлення. Повторіть запит.'
+        return 'Качество ответа оказалось нестабильным после автоматического исправления. Повторите запрос.'
 
     async def _repair_once(self, *, text: str, system_prompt: str, model_slug: str, command: str, language: str) -> str:
         repaired = await self.openrouter_client.complete(
@@ -96,8 +115,11 @@ class AIOrchestrator:
                     logger.warning('AI output validation failed command=%s model=%s reason=%s; attempting repair', command, model_slug, validation.reason)
                     repaired = await self._repair_once(text=result, system_prompt=system_prompt, model_slug=model_slug, command=command, language=target_language)
                     repaired_validation = validate_output(text=repaired, language=target_language, command=command)
-                    if repaired_validation.is_valid or repaired.strip():
+                    if repaired_validation.is_valid:
                         result = repaired
+                    else:
+                        logger.warning('AI repaired output still invalid command=%s model=%s reason=%s; using safe fallback', command, model_slug, repaired_validation.reason)
+                        result = self._quality_fallback(command=command, language=target_language)
                 duration_ms = int((perf_counter() - started) * 1000)
                 self.status_service.record_success(chat_id=chat_id, model_slug=model_slug, duration_ms=duration_ms)
                 logger.info('AI request succeeded command=%s selected_model=%s served_model=%s attempted_models=%s fallback_used=%s duration_ms=%s', command, current_model_slug, model_slug, self.status_service.snapshot(chat_id=chat_id).attempted_models, self.status_service.snapshot(chat_id=chat_id).fallback_used, duration_ms)
